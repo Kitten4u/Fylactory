@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://b1s7a7jrfahes"]
+
+[ext_resource type="Script" uid="uid://cytcxj6hb7gjp" path="res://player/assets/player.gd" id="1_kfivg"]
+[ext_resource type="Texture2D" uid="uid://btempqgq7y8nv" path="res://icon.svg" id="1_uvpc8"]
+[ext_resource type="Script" uid="uid://0btvie10qaqo" path="res://player/scripts/states.gd" id="3_ajplq"]
+[ext_resource type="Script" uid="uid://rff1djl8mv0" path="res://player/scripts/idle.gd" id="4_fg5cb"]
+[ext_resource type="Script" uid="uid://bnne5bdfw8s7q" path="res://player/scripts/run.gd" id="5_ore8x"]
+[ext_resource type="Script" uid="uid://bdrthsy7pug42" path="res://player/scripts/fall.gd" id="6_woe4d"]
+[ext_resource type="Script" uid="uid://c3vclacu0oxha" path="res://player/scripts/jump.gd" id="7_5vdxw"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kfivg"]
+size = Vector2(68, 124)
+
+[node name="Player" type="CharacterBody2D" unique_id=439054162]
+script = ExtResource("1_kfivg")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2008495714]
+position = Vector2(0, -64)
+scale = Vector2(0.578125, 1)
+texture = ExtResource("1_uvpc8")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=548206575]
+position = Vector2(0, -62)
+shape = SubResource("RectangleShape2D_kfivg")
+
+[node name="States" type="Node" parent="." unique_id=975464933]
+unique_name_in_owner = true
+script = ExtResource("3_ajplq")
+
+[node name="Idle" type="Node" parent="States" unique_id=842939711]
+unique_name_in_owner = true
+script = ExtResource("4_fg5cb")
+
+[node name="Run" type="Node" parent="States" unique_id=579841111]
+unique_name_in_owner = true
+script = ExtResource("5_ore8x")
+
+[node name="Fall" type="Node" parent="States" unique_id=118546218]
+unique_name_in_owner = true
+script = ExtResource("6_woe4d")
+
+[node name="Jump" type="Node" parent="States" unique_id=945532236]
+unique_name_in_owner = true
+script = ExtResource("7_5vdxw")
+
+[node name="Label" type="Label" parent="." unique_id=2028983066]
+offset_left = -39.0
+offset_top = -169.0
+offset_right = 37.0
+offset_bottom = -139.0
+theme_override_font_sizes/font_size = 20
+text = "State"
+horizontal_alignment = 1
