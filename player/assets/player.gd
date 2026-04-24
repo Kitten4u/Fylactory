@@ -3,6 +3,7 @@ class_name Player extends CharacterBody2D
 @export var gravity : float = 980
 @export var moveSpeed : float = 200
 @export var jumpHeight : float = 800
+@export var health : float = 100
 
 var direction : Vector2 = Vector2.RIGHT
 var states : Array [PlayerState]
