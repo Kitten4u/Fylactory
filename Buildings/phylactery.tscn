@@ -1,0 +1,28 @@
+[gd_scene format=3 uid="uid://rwrddigeppfh"]
+
+[ext_resource type="Script" uid="uid://cqwomesqi3pav" path="res://Buildings/scripts/phylactery.gd" id="1_dpcm3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hxiu6"]
+size = Vector2(50, 50)
+
+[node name="Phylactery" type="Area2D" unique_id=1410270618 groups=["Buildings"]]
+script = ExtResource("1_dpcm3")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=197910385]
+
+[node name="ColorRect" type="ColorRect" parent="Sprite2D" unique_id=708078612]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -25.5
+offset_top = -25.5
+offset_right = 24.5
+offset_bottom = 24.5
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.42961916, 7.70092e-07, 3.6098064e-07, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1168863315]
+shape = SubResource("RectangleShape2D_hxiu6")

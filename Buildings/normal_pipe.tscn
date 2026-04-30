@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://b5ljabl0gd3u5"]
+
+[ext_resource type="Script" uid="uid://c3vad04btbikg" path="res://Buildings/scripts/normal_pipe.gd" id="1_bkrrq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_07yac"]
+size = Vector2(20, 50)
+
+[node name="NormalPipe" type="Area2D" unique_id=1163958098 groups=["Buildings"]]
+script = ExtResource("1_bkrrq")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1762191340]
+
+[node name="ColorRect" type="ColorRect" parent="Sprite2D" unique_id=1849703685]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.5
+offset_top = -25.5
+offset_right = 4.5
+offset_bottom = 24.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect2" type="ColorRect" parent="Sprite2D" unique_id=513920958]
+offset_left = -5.0
+offset_top = 19.0
+offset_right = 5.0
+offset_bottom = 22.0
+color = Color(0, 0, 0, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1215061494]
+shape = SubResource("RectangleShape2D_07yac")

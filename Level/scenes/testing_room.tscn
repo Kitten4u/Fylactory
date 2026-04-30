@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://dpxba218vm1lf"]
+
+[ext_resource type="PackedScene" uid="uid://b1s7a7jrfahes" path="res://player/assets/player.tscn" id="1_pa0h4"]
+[ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://Buildings/source.tscn" id="2_0bb7k"]
+[ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://Buildings/scripts/grid.gd" id="3_0bb7k"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_y0dcm"]
+size = Vector2(1154, 40)
+
+[node name="Testing Room" type="Node2D" unique_id=857796480]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1506204430]
+position = Vector2(0, 607)
+
+[node name="ColorRect" type="ColorRect" parent="StaticBody2D" unique_id=156986975]
+offset_right = 1154.0
+offset_bottom = 40.0
+color = Color(0, 0, 0, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=866959638]
+position = Vector2(577, 20)
+shape = SubResource("RectangleShape2D_y0dcm")
+
+[node name="Player" parent="." unique_id=439054162 groups=["Player"] instance=ExtResource("1_pa0h4")]
+position = Vector2(585, 344)
+
+[node name="Sources" type="Node2D" parent="." unique_id=145973790]
+unique_name_in_owner = true
+
+[node name="Source" parent="Sources" unique_id=449896276 instance=ExtResource("2_0bb7k")]
+position = Vector2(128, 477)
+type = "Water"
+amount = 200.0
+
+[node name="ColorRect" type="ColorRect" parent="Sources/Source" unique_id=1511249545]
+offset_left = -18.0
+offset_top = -17.0
+offset_right = 18.0
+offset_bottom = 18.0
+color = Color(0, 0, 1, 1)
+
+[node name="Source2" parent="Sources" unique_id=478262520 instance=ExtResource("2_0bb7k")]
+position = Vector2(1027, 512)
+type = "Air"
+amount = 800.0
+
+[node name="ColorRect" type="ColorRect" parent="Sources/Source2" unique_id=1705301308]
+offset_left = -18.0
+offset_top = -16.0
+offset_right = 19.0
+offset_bottom = 18.0
+color = Color(0, 1, 0, 1)
+
+[node name="Grid" type="Node2D" parent="." unique_id=1858597473]
+unique_name_in_owner = true
+script = ExtResource("3_0bb7k")

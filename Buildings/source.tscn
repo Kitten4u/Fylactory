@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://d1hih5du731ut"]
+
+[ext_resource type="Script" uid="uid://b7sf0uqi84ekk" path="res://Buildings/scripts/source.gd" id="1_dpky2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_muqco"]
+size = Vector2(36, 34)
+
+[node name="Source" type="Area2D" unique_id=449896276]
+script = ExtResource("1_dpky2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=656362094]
+shape = SubResource("RectangleShape2D_muqco")
