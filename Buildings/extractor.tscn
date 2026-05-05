@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bj1qfmdi5at2o" path="res://Buildings/scripts/extractor.gd" id="1_sietr"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xxkai"]
-size = Vector2(50, 50)
+size = Vector2(44, 42)
 
 [node name="Extractor" type="Area2D" unique_id=1141119187 groups=["Buildings"]]
 script = ExtResource("1_sietr")

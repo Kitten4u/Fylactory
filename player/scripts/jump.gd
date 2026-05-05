@@ -7,7 +7,7 @@ func enter() -> void:
 	player.velocity.y = -player.jumpHeight
 
 func process(_delta: float) -> PlayerState:
-	if !player.is_on_floor() and player.velocity.y >= 0:
+	if player.velocity.y >= 0:
 		return fall
 		
 	return

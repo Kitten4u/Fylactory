@@ -2,17 +2,33 @@
 
 [ext_resource type="Script" uid="uid://cytcxj6hb7gjp" path="res://player/assets/player.gd" id="1_kfivg"]
 [ext_resource type="Texture2D" uid="uid://btempqgq7y8nv" path="res://icon.svg" id="1_uvpc8"]
+[ext_resource type="Texture2D" uid="uid://b17iq1yptwri6" path="res://player/assets/placeholderCircle.png" id="2_btyko"]
 [ext_resource type="Script" uid="uid://0btvie10qaqo" path="res://player/scripts/states.gd" id="3_ajplq"]
 [ext_resource type="Script" uid="uid://rff1djl8mv0" path="res://player/scripts/idle.gd" id="4_fg5cb"]
 [ext_resource type="Script" uid="uid://bnne5bdfw8s7q" path="res://player/scripts/run.gd" id="5_ore8x"]
 [ext_resource type="Script" uid="uid://bdrthsy7pug42" path="res://player/scripts/fall.gd" id="6_woe4d"]
 [ext_resource type="Script" uid="uid://c3vclacu0oxha" path="res://player/scripts/jump.gd" id="7_5vdxw"]
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_5vdxw"]
+radius = 281.02847
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kfivg"]
 size = Vector2(68, 124)
 
 [node name="Player" type="CharacterBody2D" unique_id=439054162]
 script = ExtResource("1_kfivg")
+
+[node name="BuildArea" type="Area2D" parent="." unique_id=694857811]
+position = Vector2(0, -66)
+
+[node name="BuildAreaCollision" type="CollisionShape2D" parent="BuildArea" unique_id=380736530]
+shape = SubResource("CircleShape2D_5vdxw")
+
+[node name="BuildAreaSprite" type="Sprite2D" parent="BuildArea" unique_id=415589]
+self_modulate = Color(1, 1, 1, 0.18431373)
+position = Vector2(-2, 1.9073486e-06)
+scale = Vector2(5.6499996, 5.6499996)
+texture = ExtResource("2_btyko")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=2008495714]
 position = Vector2(0, -64)

@@ -23,6 +23,7 @@ var previousState : PlayerState :
 
 func _ready() -> void:
 	initialize_states()
+	update_stats()
 
 func _process(delta: float) -> void:
 	update_direction()
@@ -70,3 +71,8 @@ func update_stats() -> void:
 	jumpHeight = FactoryGlobal.airAmount
 	health = FactoryGlobal.earthAmount
 	attack = FactoryGlobal.fireAmount
+	if moveSpeed <= 0:
+		moveSpeed = 100
+
+func enter_build_mode() -> void:
+	pass

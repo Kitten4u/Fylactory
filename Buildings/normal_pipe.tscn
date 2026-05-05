@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://c3vad04btbikg" path="res://Buildings/scripts/normal_pipe.gd" id="1_bkrrq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_07yac"]
-size = Vector2(20, 50)
+size = Vector2(10, 40)
 
 [node name="NormalPipe" type="Area2D" unique_id=1163958098 groups=["Buildings"]]
 script = ExtResource("1_bkrrq")

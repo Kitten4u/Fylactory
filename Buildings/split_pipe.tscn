@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://dcktntwmsputu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rmruh"]
+size = Vector2(40, 40)
+
+[node name="SplitPipe" type="Area2D" unique_id=961569678 groups=["Buildings"]]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2016529043]
+
+[node name="ColorRect" type="ColorRect" parent="Sprite2D" unique_id=1203759473]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.5
+offset_top = -25.5
+offset_right = 4.5
+offset_bottom = 24.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect2" type="ColorRect" parent="Sprite2D" unique_id=1035256077]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -25.0
+offset_top = 14.0
+offset_right = 25.0
+offset_bottom = 24.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="ColorRect3" type="ColorRect" parent="Sprite2D" unique_id=16324902]
+offset_left = 19.0
+offset_top = 15.0
+offset_right = 22.0
+offset_bottom = 25.0
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect4" type="ColorRect" parent="Sprite2D" unique_id=1202483717]
+offset_left = -20.0
+offset_top = 15.0
+offset_right = -17.0
+offset_bottom = 25.0
+color = Color(0, 0, 0, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1802363122]
+position = Vector2(1, 0)
+shape = SubResource("RectangleShape2D_rmruh")

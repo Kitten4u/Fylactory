@@ -1,34 +1,34 @@
-class_name NormalPipe extends Area2D
+class_name TurnPipe extends Area2D
 
-const GIVES_UP := Vector2(0, 1)
-const GIVES_RIGHT := Vector2(-1, 0)
-const GIVES_DOWN := Vector2(0, -1)
-const GIVES_LEFT := Vector2(1, 0)
+const GIVES_UP := Vector2(1, 0)
+const GIVES_RIGHT := Vector2(0, 1)
+const GIVES_DOWN := Vector2(-1, 0)
+const GIVES_LEFT := Vector2(0, -1)
 
 const RECIEVES_UP := Vector2(0, -1)
 const RECIEVES_RIGHT := Vector2(1, 0)
 const RECIEVES_DOWN := Vector2(0, 1)
 const RECIEVES_LEFT := Vector2(-1, 0)
 
-static func get_normal_pipe_gives(building_rotation : int, flip : bool) -> Vector2:
+static func get_turn_pipe_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
-		return GIVES_UP
+		if flip == false:
+			return GIVES_UP
+		else:
+			return GIVES_DOWN
 	elif  building_rotation == 90 or building_rotation == -270:
-		if flip == false:
-			return GIVES_RIGHT
-		else:
-			return GIVES_LEFT
+		return GIVES_RIGHT
 	elif building_rotation == 180 or building_rotation == -180:
-		return GIVES_DOWN
-	elif building_rotation == 270 or building_rotation == -90:
 		if flip == false:
-			return GIVES_LEFT
+			return GIVES_DOWN
 		else:
-			return GIVES_RIGHT
+			return GIVES_UP
+	elif building_rotation == 270 or building_rotation == -90:
+		return GIVES_LEFT
 	else:
 		return Vector2(100, 100)
 
-static func get_normal_pipe_recieves(building_rotation : int, flip : bool) -> Vector2:
+static func get_turn_pipe_recieves(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		return RECIEVES_UP
 	elif  building_rotation == 90 or building_rotation == -270:

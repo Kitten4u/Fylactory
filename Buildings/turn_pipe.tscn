@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://cqy8ue3p87kvi"]
 
+[ext_resource type="Script" uid="uid://dqaqokjnpoexm" path="res://Buildings/scripts/turn_pipe.gd" id="1_mgui4"]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_so40e"]
-size = Vector2(40, 50)
+size = Vector2(20, 32)
 
 [node name="TurnPipe" type="Area2D" unique_id=898384561 groups=["Buildings"]]
+script = ExtResource("1_mgui4")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=899088085]
 

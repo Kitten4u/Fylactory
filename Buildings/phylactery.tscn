@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cqwomesqi3pav" path="res://Buildings/scripts/phylactery.gd" id="1_dpcm3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hxiu6"]
-size = Vector2(50, 50)
+size = Vector2(36, 36)
 
 [node name="Phylactery" type="Area2D" unique_id=1410270618 groups=["Buildings"]]
 script = ExtResource("1_dpcm3")
@@ -23,6 +23,13 @@ offset_bottom = 24.5
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.42961916, 7.70092e-07, 3.6098064e-07, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="Sprite2D" unique_id=473901507]
+offset_left = -25.0
+offset_top = 16.0
+offset_right = 25.0
+offset_bottom = 21.0
+color = Color(0, 0, 0, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1168863315]
 shape = SubResource("RectangleShape2D_hxiu6")
