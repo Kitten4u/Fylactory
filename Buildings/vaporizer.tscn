@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://ct6w6os54d0fy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_247a1"]
+size = Vector2(38, 38)
+
+[node name="Vaporizer" type="Area2D" unique_id=193242192 groups=["Buildings"]]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1342680267]
+
+[node name="ColorRect" type="ColorRect" parent="Sprite2D" unique_id=1625488001]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -25.0
+offset_top = -25.0
+offset_right = 25.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect2" type="ColorRect" parent="Sprite2D" unique_id=2112170804]
+offset_left = -24.0
+offset_top = 18.0
+offset_right = 26.0
+offset_bottom = 22.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1854195961]
+shape = SubResource("RectangleShape2D_247a1")

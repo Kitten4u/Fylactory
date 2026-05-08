@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://cvfg3ivtnqdxs"]
 
+[ext_resource type="Script" uid="uid://dwlpffueq1vep" path="res://Buildings/scripts/merge_pipe.gd" id="1_0lrkh"]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xuwkj"]
 size = Vector2(42, 42)
 
 [node name="MergePipe" type="Area2D" unique_id=1900445277]
+script = ExtResource("1_0lrkh")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=309284177]
 

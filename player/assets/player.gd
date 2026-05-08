@@ -72,7 +72,7 @@ func update_stats() -> void:
 	health = FactoryGlobal.earthAmount
 	attack = FactoryGlobal.fireAmount
 	if moveSpeed <= 0:
-		moveSpeed = 100
+		moveSpeed = 10
 
 func enter_build_mode() -> void:
 	pass

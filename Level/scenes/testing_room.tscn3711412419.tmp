@@ -45,8 +45,8 @@ color = Color(0, 0, 1, 1)
 
 [node name="Source2" parent="Grid/Sources" unique_id=478262520 instance=ExtResource("2_0bb7k")]
 position = Vector2(1027, 512)
-type = Array[String](["Air"])
-amount = Array[float]([800.0])
+type = Array[String](["Water"])
+amount = Array[float]([200.0])
 
 [node name="ColorRect" type="ColorRect" parent="Grid/Sources/Source2" unique_id=1705301308]
 offset_left = -18.0
@@ -57,8 +57,8 @@ color = Color(0, 1, 0, 1)
 
 [node name="Source3" parent="Grid/Sources" unique_id=1124809623 instance=ExtResource("2_0bb7k")]
 position = Vector2(194, 272)
-type = Array[String](["Water"])
-amount = Array[float]([200.0])
+type = Array[String](["Air"])
+amount = Array[float]([800.0])
 
 [node name="ColorRect" type="ColorRect" parent="Grid/Sources/Source3" unique_id=1237849026]
 offset_left = -18.0
