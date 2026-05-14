@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://cxy7k3037vmg4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xt6ct"]
+size = Vector2(38, 38)
+
+[node name="UndergroundPipeEnd" type="Area2D" unique_id=1501191827 groups=["Buildings"]]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=342839415]
+
+[node name="ColorRect" type="ColorRect" parent="Sprite2D" unique_id=121487052]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -25.0
+offset_top = -25.0
+offset_right = 25.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect2" type="ColorRect" parent="Sprite2D" unique_id=614273401]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -15.0
+offset_top = -15.0
+offset_right = 15.0
+offset_bottom = 15.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect3" type="ColorRect" parent="Sprite2D" unique_id=333889202]
+offset_left = -24.0
+offset_top = 19.0
+offset_right = 26.0
+offset_bottom = 23.0
+color = Color(0, 0, 0, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1294907786]
+shape = SubResource("RectangleShape2D_xt6ct")

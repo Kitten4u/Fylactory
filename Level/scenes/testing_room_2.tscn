@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://bqbg5v8vf8ala"]
+
+[ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://Buildings/scripts/grid.gd" id="1_04203"]
+[ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://Buildings/source.tscn" id="2_cpv4j"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_u87jy"]
+size = Vector2(1162, 36)
+
+[node name="TestingRoom2" type="Node2D" unique_id=757938610]
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=303357570]
+offset_top = 611.0
+offset_right = 1153.0
+offset_bottom = 651.0
+color = Color(0, 0, 0, 1)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=2019757400]
+position = Vector2(-2, 622)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=2049690303]
+position = Vector2(571, 8)
+shape = SubResource("RectangleShape2D_u87jy")
+
+[node name="Grid" type="Node2D" parent="." unique_id=1024741771]
+unique_name_in_owner = true
+script = ExtResource("1_04203")
+GRID_SIZE = Vector2(1200, 1000)
+
+[node name="Sources" type="Node2D" parent="Grid" unique_id=399233411]
+unique_name_in_owner = true
+
+[node name="Source" parent="." unique_id=449896276 instance=ExtResource("2_cpv4j")]
+position = Vector2(212, 386)
+type = Array[String](["Fire"])
+amount = Array[float]([200.0])
+
+[node name="ColorRect" type="ColorRect" parent="Source" unique_id=24212161]
+offset_left = -18.0
+offset_top = -17.0
+offset_right = 18.0
+offset_bottom = 17.0
+color = Color(1, 0, 0, 1)
+
+[node name="Source2" parent="." unique_id=1525840648 instance=ExtResource("2_cpv4j")]
+position = Vector2(379, 245)
+type = Array[String](["Fire", "Earth"])
+amount = Array[float]([200.0, 400.0])
+
+[node name="ColorRect" type="ColorRect" parent="Source2" unique_id=1290206380]
+offset_left = -18.0
+offset_top = -16.0
+offset_right = 18.0
+offset_bottom = 18.0
+color = Color(1, 0, 0, 1)
+
+[node name="Source3" parent="." unique_id=1053462891 instance=ExtResource("2_cpv4j")]
+position = Vector2(994, 420)
+type = Array[String](["Earth"])
+amount = Array[float]([600.0])
+
+[node name="ColorRect" type="ColorRect" parent="Source3" unique_id=725886163]
+offset_left = -18.0
+offset_top = -18.0
+offset_right = 18.0
+offset_bottom = 17.0
+color = Color(0.31764707, 0.2, 0.06666667, 1)
