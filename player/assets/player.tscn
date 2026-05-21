@@ -15,7 +15,8 @@ radius = 281.02847
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kfivg"]
 size = Vector2(68, 124)
 
-[node name="Player" type="CharacterBody2D" unique_id=439054162]
+[node name="Player" type="CharacterBody2D" unique_id=439054162 groups=["Player"]]
+collision_layer = 16
 script = ExtResource("1_kfivg")
 
 [node name="BuildArea" type="Area2D" parent="." unique_id=694857811]

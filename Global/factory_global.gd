@@ -1,9 +1,12 @@
 extends Node
 
+# Player Stats
 var waterAmount : float = 0
 var fireAmount : float = 0
 var airAmount : float = 0
 var earthAmount : float = 0
+
+var activePipeLayout : Dictionary[String, Dictionary]
 
 func _ready() -> void:
 	pass

@@ -6,7 +6,6 @@ class_name Player extends CharacterBody2D
 @export var airMultiplier : float = 1
 @export var fireMultiplier : float = 1
 @export var earthMultiplier : float = 1
-@export var factoryOpacity : float = .75
 
 # Player Stats
 var moveSpeed : float 
@@ -28,13 +27,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("build_mode"):
-		if %Grid.visible == false:
-			%Buildings.self_modulate.a = 1
-			%Grid.show()
+		if $BuildArea.visible == false:
 			$BuildArea.show()
 		else:
-			%Buildings.self_modulate.a = factoryOpacity
-			%Grid.hide()
 			$BuildArea.hide()
 	update_direction()
 	change_states(currentState.process(delta))
@@ -82,7 +77,4 @@ func update_stats() -> void:
 	health = FactoryGlobal.earthAmount
 	attack = FactoryGlobal.fireAmount
 	if moveSpeed <= 0:
-		moveSpeed = 10
-
-func enter_build_mode() -> void:
-	pass
+		moveSpeed = 500
