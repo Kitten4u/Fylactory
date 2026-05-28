@@ -84,3 +84,8 @@ script = ExtResource("1_yv6bu")
 width = 1152
 height = 654
 metadata/_custom_type_script = "uid://2nbqb7161hkw"
+
+[node name="ClickTimer" type="Timer" parent="." unique_id=1084213233]
+unique_name_in_owner = true
+wait_time = 0.05
+one_shot = true

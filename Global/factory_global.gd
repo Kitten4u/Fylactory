@@ -6,7 +6,7 @@ var fireAmount : float = 0
 var airAmount : float = 0
 var earthAmount : float = 0
 
-var activePipeLayout : Dictionary[String, Dictionary]
+var activePipeLayout : Dictionary
 
 func _ready() -> void:
 	pass
