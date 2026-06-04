@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://2nbqb7161hkw" path="res://Level/scripts/level_bounds.gd" id="1_yv6bu"]
 [ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://Buildings/source.tscn" id="2_0bb7k"]
+[ext_resource type="PackedScene" uid="uid://cj8qd2tgxkfr3" path="res://Buildings/building_wheel.tscn" id="2_ba24s"]
 [ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://Buildings/scripts/grid.gd" id="3_0bb7k"]
 [ext_resource type="PackedScene" uid="uid://b13tqsemuydqa" path="res://Level/scenes/level_transition.tscn" id="3_8mwx7"]
 [ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://Level/scenes/player_spawn.tscn" id="4_yv6bu"]
@@ -26,6 +27,12 @@ shape = SubResource("RectangleShape2D_y0dcm")
 [node name="Grid" type="Node2D" parent="." unique_id=1858597473]
 unique_name_in_owner = true
 script = ExtResource("3_0bb7k")
+
+[node name="BuildingWheel" parent="Grid" unique_id=1894281909 instance=ExtResource("2_ba24s")]
+offset_left = 119.0
+offset_top = 53.0
+offset_right = 119.0
+offset_bottom = 53.0
 
 [node name="Sources" type="Node2D" parent="Grid" unique_id=145973790]
 unique_name_in_owner = true

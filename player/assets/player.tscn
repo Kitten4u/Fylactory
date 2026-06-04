@@ -10,7 +10,7 @@
 [ext_resource type="Script" uid="uid://c3vclacu0oxha" path="res://player/scripts/jump.gd" id="7_5vdxw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_5vdxw"]
-radius = 281.02847
+radius = 280.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kfivg"]
 size = Vector2(68, 124)
