@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://rwrddigeppfh"]
 
-[ext_resource type="Script" uid="uid://cqwomesqi3pav" path="res://Buildings/scripts/phylactery.gd" id="1_dpcm3"]
+[ext_resource type="Script" uid="uid://cqwomesqi3pav" path="res://buildings/scripts/phylactery.gd" id="1_dpcm3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hxiu6"]
 size = Vector2(36, 36)

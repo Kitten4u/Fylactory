@@ -5,9 +5,12 @@ const CELL_SIZE := Vector2(50, 50)
 const HALF_CELL_SIZE := Vector2(25, 25)
 const GRID_LINE_COLOR : String = "White"
 const GRID_HIGHLIGHT_COLOR : String = "Magenta"
-const GRID_DRAG_COLOR : String = "Green"
+const GRID_GOOD_COLOR : String = "Green"
 const GRID_ERROR_COLOR : String = "Red"
 const GRID_TRANSFORM_COLOR : String = "Blue"
+const GRID_REPLACE_COLOR : String = "Purple"
+const GRID_SELECTION_OUTLINE_COLOR : String = "Black"
+const GRID_BOX_OUTLLINE_THICKNESS : float = 5.0
 const factoryOpacity : float = .75
 const buildAreaRadius : float = 280.0
 
@@ -31,6 +34,7 @@ var earthAmount : float = 0
 
 var player : Player
 var activePipeLayout : Dictionary
+var blueprintDictionary : Dictionary
 
 func _ready() -> void:
 	buildingArray.append(normalPipe)

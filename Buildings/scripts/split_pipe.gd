@@ -15,6 +15,8 @@ const RECIEVES_RIGHT := Vector2(1, 0)
 const RECIEVES_DOWN := Vector2(0, 1)
 const RECIEVES_LEFT := Vector2(-1, 0)
 
+const TYPE : String = "uid://dcktntwmsputu"
+
 static func get_split_pipe_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		if flip == false:

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cj8qd2tgxkfr3"]
 
-[ext_resource type="Script" uid="uid://8le2r0ujuvmq" path="res://Buildings/scripts/building_wheel.gd" id="1_promu"]
+[ext_resource type="Script" uid="uid://8le2r0ujuvmq" path="res://buildings/scripts/building_wheel.gd" id="1_promu"]
 
 [node name="BuildingWheel" type="Control" unique_id=1894281909]
 z_index = 200

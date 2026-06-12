@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bureh7vratkm6"]
 
 [ext_resource type="Texture2D" uid="uid://btempqgq7y8nv" path="res://icon.svg" id="1_5qdij"]
-[ext_resource type="Script" uid="uid://6xs8ng74aqw6" path="res://Level/scripts/player_spawn.gd" id="1_w6xca"]
+[ext_resource type="Script" uid="uid://6xs8ng74aqw6" path="res://level/scripts/player_spawn.gd" id="1_w6xca"]
 
 [node name="PlayerSpawn" type="Node2D" unique_id=151070151]
 script = ExtResource("1_w6xca")

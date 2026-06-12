@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://ct6w6os54d0fy"]
 
+[ext_resource type="Script" uid="uid://b5kefwpsc6fnf" path="res://buildings/scripts/vaporizer.gd" id="1_m1hik"]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_247a1"]
 size = Vector2(38, 38)
 
 [node name="Vaporizer" type="Area2D" unique_id=193242192 groups=["Buildings"]]
+script = ExtResource("1_m1hik")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1342680267]
 

@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://bqbg5v8vf8ala"]
 
-[ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://Buildings/scripts/grid.gd" id="1_04203"]
-[ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://Buildings/source.tscn" id="2_cpv4j"]
-[ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://Level/scenes/player_spawn.tscn" id="3_nd6x2"]
-[ext_resource type="PackedScene" uid="uid://b13tqsemuydqa" path="res://Level/scenes/level_transition.tscn" id="4_lmlh5"]
-[ext_resource type="Script" uid="uid://2nbqb7161hkw" path="res://Level/scripts/level_bounds.gd" id="5_lvsff"]
-[ext_resource type="PackedScene" uid="uid://cj8qd2tgxkfr3" path="res://Buildings/building_wheel.tscn" id="6_7i1jp"]
+[ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://buildings/scripts/grid.gd" id="1_04203"]
+[ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://buildings/source.tscn" id="2_cpv4j"]
+[ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://level/scenes/player_spawn.tscn" id="3_nd6x2"]
+[ext_resource type="PackedScene" uid="uid://b13tqsemuydqa" path="res://level/scenes/level_transition.tscn" id="4_lmlh5"]
+[ext_resource type="Script" uid="uid://2nbqb7161hkw" path="res://level/scripts/level_bounds.gd" id="5_lvsff"]
+[ext_resource type="PackedScene" uid="uid://cj8qd2tgxkfr3" path="res://buildings/building_wheel.tscn" id="6_7i1jp"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u87jy"]
 size = Vector2(1162, 36)
@@ -29,7 +29,6 @@ shape = SubResource("RectangleShape2D_u87jy")
 [node name="Grid" type="Node2D" parent="." unique_id=1024741771]
 unique_name_in_owner = true
 script = ExtResource("1_04203")
-GRID_SIZE = Vector2(1200, 1000)
 
 [node name="BuildingWheel" parent="Grid" unique_id=1894281909 instance=ExtResource("6_7i1jp")]
 offset_left = 68.0

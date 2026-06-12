@@ -15,6 +15,8 @@ const MERGES_RIGHT := Vector2(0, -1)
 const MERGES_DOWN := Vector2(1, 0)
 const MERGES_LEFT := Vector2(0, 1)
 
+const TYPE : String = "uid://cvfg3ivtnqdxs"
+
 static func get_merge_pipe_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		return GIVES_UP

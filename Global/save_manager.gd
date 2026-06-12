@@ -28,6 +28,7 @@ func create_new_game_save() -> void:
 		"Y" : 603.0,
 		"HP" : 20,
 		"Factory" : {},
+		"Blueprints" : {},
 		"Discovered Areas" : discoveredAreas,
 		"Persistent Data" : persistentData
 	}
@@ -44,6 +45,7 @@ func save_game() -> void:
 		"Y" : player.global_position.y,
 		"HP" : player.health,
 		"Factory" : FactoryGlobal.activePipeLayout,
+		"Blueprints" : {},
 		"Discovered Areas" : discoveredAreas,
 		"Persistent Data" : persistentData
 	}

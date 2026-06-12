@@ -1,4 +1,4 @@
-extends Node2D
+class_name Grid extends Node2D
 
 @onready var clickTimer := %ClickTimer
 
@@ -6,9 +6,9 @@ extends Node2D
 @export var GRID_SIZE := Vector2(1000, 1000)
 var CELL_AMOUNT : Vector2
 
-# Building Information
-var buildingArray = []
 var sourceArray : Array[Source]
+var disableInput : bool = false
+var selectedBlueprint : bool = false
 
 # Build Mode Information
 var selectedBuilding = FactoryGlobal.normalPipe
@@ -19,14 +19,15 @@ var buildingRotation : int = 0
 var flip : bool = false
 var justBuiltBuildingUnderground : bool = false
 var undergroundLocation : String
-var phylacteryLocation : Vector2
+var phylacteryLocation : String
 
-# Preview for Dragging Info
+# Preview for Pipe Dragging Path
+var pipeDragging : bool = false
+var forceBuild : bool = false
 var preDragBuilding
 var preDragBuildingIndex : int
 var preDragBuildingRotation : int
 var preDragBuildingFlip : bool
-var dragging : bool = false
 var isBuildingUnderground : bool = false
 var previewDirection := Vector2.INF
 var previewStart := Vector2.INF
@@ -37,6 +38,12 @@ var transformPipe : bool = false
 var playerLocation : Vector2
 var overlappingPipes : Array[Vector2] = []
 var outsideBuildAreaPipes : Array[Vector2] = []
+
+# For Selecting Pipes
+var selectionDragging : bool = false
+var copying : bool = false
+var selectedPipes : Array = []
+var selectionDragStart := Vector2.ZERO
 
 # Total Element Counters
 # NOTE FOR ELEMENT ARRAYS
@@ -53,14 +60,11 @@ func _ready() -> void:
 	# calculate grid size
 	CELL_AMOUNT = Vector2(GRID_SIZE.x / FactoryGlobal.CELL_SIZE.x, GRID_SIZE.y / FactoryGlobal.CELL_SIZE.y)
 	
-	# Add Buildings to the buildingArray
-	buildingArray = FactoryGlobal.buildingArray
-	
 	# Create the building preview
 	buildingPreviewInstance = selectedBuilding.instantiate()
 	add_child(buildingPreviewInstance)
 	buildingPreviewInstance.modulate.a = 0.7
-	
+
 	# Add Sources to sourceArray
 	for source in %Sources.get_children():
 		if source is Source:
@@ -69,91 +73,141 @@ func _ready() -> void:
 	# Rebuild Factory
 	if FactoryGlobal.activePipeLayout.has(get_parent().name):
 		pipeInfo = FactoryGlobal.activePipeLayout[get_parent().name].duplicate(true)
-		for pipe in FactoryGlobal.activePipeLayout[get_parent().name]:
+		for pipe in pipeInfo:
 			var buildingScene = null
 			while not buildingScene:
 				buildingScene = load(pipeInfo[pipe]["Scene"])
 				await get_tree().process_frame
 			
 			var building = buildingScene.instantiate()
-			%Buildings.add_child(building)
 			building.position = Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"]) + FactoryGlobal.HALF_CELL_SIZE
 			if pipeInfo[pipe]["Flip"] == true:
 				building.scale.x = -1
 			building.get_node("Sprite2D").rotate(deg_to_rad(pipeInfo[pipe]["Rotation"]))
 			building.add_to_group("Buildings")
+			%Buildings.add_child(building)
+		
 		recalculate_factory()
 
 func _process(_delta: float) -> void:
-	if Input.is_action_just_pressed("build_mode"):
-		enter_exit_build_mode()
-	
-	if %Grid.visible == true:
-		if Input.is_action_just_released("attack_build"):
-			dragging = false
-			if selectedBuilding != FactoryGlobal.undergroundPipeStart:
-				if clickTimer.get_time_left() > 0.0:
-					previewStart = Vector2.INF
-					currentPreview = Vector2.INF
-					spawn_building(var_to_str(cursor_snap()))
-				else:
-					previewEnd = cursor_snap()
+	if disableInput == false:
+		if Input.is_action_just_pressed("build_mode"):
+			enter_exit_build_mode()
+		
+		if %Grid.visible == true:
+			if Input.is_action_just_released("attack_build"):
+				if copying == true:
+					selectionDragging = false
+					var holder = $Holder
+					for pipe in holder.get_children():
+						selectedBuilding = load(pipe.TYPE)
+						pipe.position = pipe.position - FactoryGlobal.HALF_CELL_SIZE
+						buildingRotation = rad_to_deg(pipe.get_node("Sprite2D").rotation)
+						if pipe.scale.x == -1:
+							flip = true
+						else: 
+							flip = false
+						spawn_building(var_to_str(pipe.position))
 					
-					if previewStart != previewEnd:
-						handle_pipe_chain()
+					copying = false
+					holder.queue_free()
+				else:
+					if selectedBuildingIndex != -1:
+						pipeDragging = false
+						if selectedBuilding != FactoryGlobal.undergroundPipeStart:
+							if clickTimer.get_time_left() > 0.0:
+								previewStart = Vector2.INF
+								currentPreview = Vector2.INF
+								spawn_building(var_to_str(cursor_snap()))
+							else:
+								previewEnd = cursor_snap()
+								
+								if previewStart != previewEnd:
+									handle_pipe_chain()
+								else:
+									spawn_building(var_to_str(previewStart))
+									previewStart = Vector2.INF
+									currentPreview = Vector2.INF
+							
+							selectedBuildingIndex = preDragBuildingIndex
+							selectedBuilding = FactoryGlobal.buildingArray[selectedBuildingIndex]
+							flip = preDragBuildingFlip
+							buildingRotation = preDragBuildingRotation
+							select_building(selectedBuildingIndex)
+						else:
+							isBuildingUnderground = false
+							spawn_building(var_to_str(previewStart))
+							previewStart = Vector2.INF
+					
 					else:
-						spawn_building(var_to_str(previewStart))
-						previewStart = Vector2.INF
-						currentPreview = Vector2.INF
+						selectionDragging = false
+						create_copy_preview()
 				
-				selectedBuildingIndex = preDragBuildingIndex
-				selectedBuilding = buildingArray[selectedBuildingIndex]
-				flip = preDragBuildingFlip
-				buildingRotation = preDragBuildingRotation
+			elif Input.is_action_just_pressed("attack_build"):
+				if copying == false:
+					if selectedBuildingIndex != -1:
+						if selectedBuilding != FactoryGlobal.undergroundPipeStart:
+							previewEnd = Vector2.INF
+							pipeDragging = true
+							clickTimer.start(0.05)
+							preDragBuilding = selectedBuilding
+							preDragBuildingIndex = selectedBuildingIndex
+							preDragBuildingFlip = flip
+							preDragBuildingRotation = buildingRotation
+						
+						else:
+							isBuildingUnderground = true
+							previewStart = cursor_snap()
+						
+					else:
+						selectionDragging = true
+						selectionDragStart = get_local_mouse_position()
+		
+			elif Input.is_action_just_pressed("select_building") and justBuiltBuildingUnderground == false:
+				$BuildingWheel.position = get_local_mouse_position()
+				$BuildingWheel.show()
+			
+			elif Input.is_action_just_pressed("open_blueprint"):
+				var parent = get_tree().root
+				var blueprintMenu = parent.get_node_or_null("BlueprintMenu")
+				if blueprintMenu == null:
+					selectedBlueprint = false
+					blueprintMenu = load("res://Menus/blueprint_menu.tscn").instantiate()
+					parent.add_child(blueprintMenu)
+					get_tree().paused = true
+					disableInput = true
+				else:
+					get_tree().paused = false
+					blueprintMenu.queue_free()
+			
+			elif Input.is_action_just_released("force_build"):
+				forceBuild = false
+			
+			elif Input.is_action_just_pressed("force_build"):
+				forceBuild = true
+			
+			elif Input.is_action_just_released("select_building"):
+				selectedBuildingIndex = $BuildingWheel.close()
 				select_building(selectedBuildingIndex)
-			else:
-				isBuildingUnderground = false
-				spawn_building(var_to_str(previewStart))
-				previewStart = Vector2.INF
 			
-		elif Input.is_action_just_pressed("attack_build"):
-			if selectedBuilding != FactoryGlobal.undergroundPipeStart:
-				previewEnd = Vector2.INF
-				dragging = true
-				clickTimer.start(0.05)
-				preDragBuilding = selectedBuilding
-				preDragBuildingIndex = selectedBuildingIndex
-				preDragBuildingFlip = flip
-				preDragBuildingRotation = buildingRotation
+			elif Input.is_action_just_pressed("delete_building"):
+				delete_building(var_to_str(cursor_snap()))
 			
-			else:
-				isBuildingUnderground = true
-				previewStart = cursor_snap()
-		
-		elif Input.is_action_just_pressed("select_building") and justBuiltBuildingUnderground == false:
-			$BuildingWheel.global_position = get_global_mouse_position()
-			$BuildingWheel.show()
-		
-		elif Input.is_action_just_released("select_building"):
-			selectedBuildingIndex = $BuildingWheel.close()
-			select_building(selectedBuildingIndex)
-		
-		elif Input.is_action_just_pressed("delete_building"):
-			delete_building(var_to_str(cursor_snap()))
-		
-		elif Input.is_action_just_pressed("rotate_left"):
-			rotate_building(-90)
-		
-		elif Input.is_action_just_pressed("rotate_right"):
-			rotate_building(90)
-		
-		elif Input.is_action_just_pressed("flip_horizontal"):
-			flip_building()
+			elif Input.is_action_just_pressed("rotate_left"):
+				rotate_building(-90)
+			
+			elif Input.is_action_just_pressed("rotate_right"):
+				rotate_building(90)
+			
+			elif Input.is_action_just_pressed("flip_horizontal"):
+				flip_building()
+	else:
+		disableInput = false
 	
 	if FactoryGlobal.player:
 		playerLocation = FactoryGlobal.player.get_node("BuildArea").global_position
 	
-	if dragging == true:
+	if pipeDragging == true:
 		if buildingPreviewInstance:
 			buildingPreviewInstance.queue_free()
 		create_preview_path()
@@ -168,113 +222,73 @@ func _process(_delta: float) -> void:
 			var pipeFacing : Vector2
 			var pipeCorner : Vector2
 			
-			if playerLocation.distance_to(previewStart) > FactoryGlobal.buildAreaRadius:
-				outsideBuildAreaPipes.append(previewStart)
+			var coordCheck := previewStart
+			var previewPlace : float
+			var previewChange : float
+			var pointCheck : float
+			var farthestPoint : float
+			
+			if abs(previewDirection.x) > abs(previewDirection.y):
+				pointCheck = previewStart.x
+				farthestPoint = currentPreview.x
+				if currentPreview.x > previewStart.x:
+					previewChange = FactoryGlobal.CELL_SIZE.x
+				else:
+					previewChange = -FactoryGlobal.CELL_SIZE.x
 				
-				if currentPreview != previewStart:
-					var coordCheck : Vector2 = previewStart
-					var pointCheck : float
-					var farthestPoint : float 
-					var previewPlace : float = 0
-					
-					if abs(previewDirection.x) > abs(previewDirection.y):
-						pointCheck = previewStart.x
-						farthestPoint = currentPreview.x
-						if currentPreview.x > previewStart.x:
-							previewPlace = FactoryGlobal.CELL_SIZE.x
-						else:
-							previewPlace = -FactoryGlobal.CELL_SIZE.x
-					else:
-						pointCheck = previewStart.y
-						farthestPoint = currentPreview.y
-						if currentPreview.y > previewStart.y:
-							previewPlace = FactoryGlobal.CELL_SIZE.y
-						else:
-							previewPlace = -FactoryGlobal.CELL_SIZE.y
-							
-					while is_inside_build_area(coordCheck) == false and pointCheck != farthestPoint:
-						if abs(previewDirection.x) > abs(previewDirection.y):
-							coordCheck = Vector2(previewStart.x + previewPlace, previewStart.y)
-							outsideBuildAreaPipes.append(coordCheck)
-						else: 
-							coordCheck = Vector2(previewStart.x, previewStart.y + previewPlace)
-							outsideBuildAreaPipes.append(coordCheck)
-						
-						if abs(previewDirection.x) > abs(previewDirection.y):
-							if currentPreview.x > previewStart.x:
-								pointCheck += FactoryGlobal.CELL_SIZE.x
-								previewPlace += FactoryGlobal.CELL_SIZE.x
-							else:
-								pointCheck -= FactoryGlobal.CELL_SIZE.x
-								previewPlace -= FactoryGlobal.CELL_SIZE.x
-						else:
-							if currentPreview.y > previewStart.y:
-								pointCheck += FactoryGlobal.CELL_SIZE.y
-								previewPlace += FactoryGlobal.CELL_SIZE.y
-							else:
-								pointCheck -= FactoryGlobal.CELL_SIZE.y
-								previewPlace -= FactoryGlobal.CELL_SIZE.y
-						
-						if abs(previewDirection.x) > abs(previewDirection.y):
-							if is_inside_build_area(Vector2(previewStart.x + previewPlace, previewStart.y)):
-								break	
-						else: 
-							if is_inside_build_area(Vector2(previewStart.x, previewStart.y + previewPlace)):
-								break
-		
-			if playerLocation.distance_to(currentPreview) > FactoryGlobal.buildAreaRadius:
-				outsideBuildAreaPipes.append(currentPreview)
+			else:
+				pointCheck = previewStart.y
+				farthestPoint = currentPreview.y
+				if currentPreview.y > previewStart.y:
+					previewChange = FactoryGlobal.CELL_SIZE.y
+				else:
+					previewChange = -FactoryGlobal.CELL_SIZE.y
+			
+			previewPlace = previewChange
+			if is_inside_build_area(previewStart) == false:
+					outsideBuildAreaPipes.append(previewStart)
+			
+			while pointCheck != farthestPoint:
+				if abs(previewDirection.x) > abs(previewDirection.y):
+					coordCheck = Vector2(previewStart.x + previewPlace, previewStart.y)
+				else: 
+					coordCheck = Vector2(previewStart.x, previewStart.y + previewPlace)
 				
-				if currentPreview != previewStart:
-					var coordCheck : Vector2 = currentPreview
-					var pointCheck : float
-					var farthestPoint : float 
-					var previewPlace : float = 0
-					
-					if abs(previewDirection.x) > abs(previewDirection.y):
-						pointCheck = currentPreview.y
-						farthestPoint = previewStart.y
-						if currentPreview.y > previewStart.y:
-							previewPlace = -FactoryGlobal.CELL_SIZE.y
-						else:
-							previewPlace = FactoryGlobal.CELL_SIZE.y
-					else:
-						pointCheck = currentPreview.x
-						farthestPoint = previewStart.x
-						if currentPreview.x > previewStart.x:
-							previewPlace = -FactoryGlobal.CELL_SIZE.x
-						else:
-							previewPlace = FactoryGlobal.CELL_SIZE.x
-							
-					while is_inside_build_area(coordCheck) == false and pointCheck != farthestPoint:
-						if abs(previewDirection.x) > abs(previewDirection.y):
-							coordCheck = Vector2(currentPreview.x, currentPreview.y + previewPlace)
-							outsideBuildAreaPipes.append(coordCheck)
-						else: 
-							coordCheck = Vector2(currentPreview.x + previewPlace, currentPreview.y)
-							outsideBuildAreaPipes.append(coordCheck)
+				if is_inside_build_area(coordCheck) == false:
+					outsideBuildAreaPipes.append(coordCheck)
+				
+				previewPlace += previewChange
+				pointCheck += previewChange
+			
+			if abs(previewDirection.x) > abs(previewDirection.y):
+				pointCheck = previewStart.y
+				farthestPoint = currentPreview.y
+				if currentPreview.y > previewStart.y:
+					previewChange = FactoryGlobal.CELL_SIZE.y
+				else:
+					previewChange = -FactoryGlobal.CELL_SIZE.y
+				
+			else:
+				pointCheck = previewStart.x
+				farthestPoint = currentPreview.x
+				if currentPreview.x > previewStart.x:
+					previewChange = FactoryGlobal.CELL_SIZE.x
+				else:
+					previewChange = -FactoryGlobal.CELL_SIZE.x
+			
+			previewPlace = previewChange
+			
+			while pointCheck != farthestPoint:
+				if abs(previewDirection.x) > abs(previewDirection.y):
+					coordCheck = Vector2(currentPreview.x, previewStart.y + previewPlace)
+				else: 
+					coordCheck = Vector2(previewStart.x + previewPlace, currentPreview.y)
+				
+				if is_inside_build_area(coordCheck) == false:
+					outsideBuildAreaPipes.append(coordCheck)
 						
-						if abs(previewDirection.x) > abs(previewDirection.y):
-							if currentPreview.y > previewStart.y:
-								pointCheck -= FactoryGlobal.CELL_SIZE.y
-								previewPlace -= FactoryGlobal.CELL_SIZE.y
-							else:
-								pointCheck += FactoryGlobal.CELL_SIZE.y
-								previewPlace += FactoryGlobal.CELL_SIZE.y
-						else:
-							if currentPreview.x > previewStart.x:
-								pointCheck -= FactoryGlobal.CELL_SIZE.x
-								previewPlace -= FactoryGlobal.CELL_SIZE.x
-							else:
-								pointCheck += FactoryGlobal.CELL_SIZE.x
-								previewPlace += FactoryGlobal.CELL_SIZE.x
-								
-						if abs(previewDirection.x) > abs(previewDirection.y):
-							if is_inside_build_area(Vector2(currentPreview.x, currentPreview.y + previewPlace)):
-								break
-						else: 
-							if is_inside_build_area(Vector2(currentPreview.x + previewPlace, currentPreview.y)):
-								break
+				previewPlace += previewChange
+				pointCheck += previewChange
 			
 			if abs(previewDirection.x) > abs(previewDirection.y):
 				pipeFacing = previewStart.direction_to(Vector2(currentPreview.x, previewStart.y))
@@ -302,12 +316,40 @@ func _process(_delta: float) -> void:
 				or Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"]) == pipeCorner:
 					overlappingPipes.append(Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"]))
 	
+	elif selectionDragging == true:
+		selectedPipes.clear()
+		var selectionDragEnd : Vector2 = get_local_mouse_position()
+		var selectionRect := Rect2(selectionDragStart, selectionDragEnd - selectionDragStart).abs()
+		for pipe in pipeInfo:
+			if selectionRect.has_point(Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"])) \
+			or selectionRect.has_point(Vector2(pipeInfo[pipe]["X"] + FactoryGlobal.CELL_SIZE.x, pipeInfo[pipe]["Y"])) \
+			or selectionRect.has_point(Vector2(pipeInfo[pipe]["X"] + FactoryGlobal.CELL_SIZE.x, pipeInfo[pipe]["Y"] + FactoryGlobal.CELL_SIZE.y)) \
+			or selectionRect.has_point(Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"] + FactoryGlobal.CELL_SIZE.y)):
+				selectedPipes.append(Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"]))
+	
+	elif copying == true:
+		overlappingPipes.clear()
+		selectedPipes.clear()
+		var holder = get_node_or_null("Holder")
+		if holder:
+			for pipe in holder.get_children():
+				if pipeInfo.has(var_to_str(pipe.position - FactoryGlobal.HALF_CELL_SIZE)):
+					overlappingPipes.append(pipe.position - FactoryGlobal.HALF_CELL_SIZE)
+				else:
+					selectedPipes.append(pipe.position - FactoryGlobal.HALF_CELL_SIZE)
+	
 	elif isBuildingUnderground == true:
 		if buildingPreviewInstance:
 			buildingPreviewInstance.queue_free()
 	
-	if buildingPreviewInstance:
-		buildingPreviewInstance.position = cursor_snap() + FactoryGlobal.HALF_CELL_SIZE
+	var buildCopy = get_node_or_null("Holder")
+	if buildCopy:
+		copying = true
+		buildCopy.position = cursor_snap()
+	else:
+		copying = false
+		if buildingPreviewInstance:
+			buildingPreviewInstance.position = cursor_snap() + FactoryGlobal.HALF_CELL_SIZE
 	
 	queue_redraw()
 
@@ -322,21 +364,37 @@ func _draw() -> void:
 		var lineRight := Vector2(GRID_SIZE.x, lineLeft.y)
 		draw_line(lineLeft, lineRight, FactoryGlobal.GRID_LINE_COLOR)
 	
-	draw_rect(highlight_cell(), FactoryGlobal.GRID_HIGHLIGHT_COLOR)
+	if selectionDragging == false and copying == false:
+		draw_rect(highlight_cell(), FactoryGlobal.GRID_HIGHLIGHT_COLOR)
 	
-	if dragging == true:
-		draw_rect(create_preview_path_start(), FactoryGlobal.GRID_DRAG_COLOR)
-		draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_DRAG_COLOR)
-		draw_rect(create_preview_path_end(), FactoryGlobal.GRID_DRAG_COLOR)
-		draw_rect(Rect2(currentPreview, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_DRAG_COLOR)
+	if copying == true:
+		if overlappingPipes != []:
+			for index in overlappingPipes.size():
+				if forceBuild == false:
+					draw_rect(Rect2(overlappingPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_ERROR_COLOR)
+				else:
+					draw_rect(Rect2(overlappingPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_REPLACE_COLOR)
+		
+		if selectedPipes != []:
+			for index in selectedPipes.size():
+				draw_rect(Rect2(selectedPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
+	
+	elif pipeDragging == true:
+		draw_rect(create_preview_path_start(), FactoryGlobal.GRID_GOOD_COLOR)
+		draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
+		draw_rect(create_preview_path_end(), FactoryGlobal.GRID_GOOD_COLOR)
+		draw_rect(Rect2(currentPreview, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
 		if abs(previewDirection.x) > abs(previewDirection.y):
-			draw_rect(Rect2(currentPreview.x, previewStart.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_DRAG_COLOR)
+			draw_rect(Rect2(currentPreview.x, previewStart.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_GOOD_COLOR)
 		else:
-			draw_rect(Rect2(previewStart.x, currentPreview.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_DRAG_COLOR)
+			draw_rect(Rect2(previewStart.x, currentPreview.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_GOOD_COLOR)
 		
 		if overlappingPipes != []:
 			for index in overlappingPipes.size():
-				draw_rect(Rect2(overlappingPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_ERROR_COLOR)
+				if forceBuild == false:
+					draw_rect(Rect2(overlappingPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_ERROR_COLOR)
+				else:
+					draw_rect(Rect2(overlappingPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_REPLACE_COLOR)
 		
 		if outsideBuildAreaPipes != []:
 			for index in outsideBuildAreaPipes.size():
@@ -345,8 +403,15 @@ func _draw() -> void:
 		if transformPipe == true:
 			draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_TRANSFORM_COLOR)
 	
+	elif selectionDragging == true:
+		if selectedPipes != []:
+			for index in selectedPipes.size():
+				draw_rect(Rect2(selectedPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_HIGHLIGHT_COLOR)
+		
+		draw_rect(Rect2(selectionDragStart, get_local_mouse_position() - selectionDragStart), FactoryGlobal.GRID_SELECTION_OUTLINE_COLOR, false, FactoryGlobal.GRID_BOX_OUTLLINE_THICKNESS)
+	
 	elif isBuildingUnderground == true:
-		draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_DRAG_COLOR)
+		draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
 
 func highlight_cell() -> Rect2:
 	return Rect2(cursor_snap(), FactoryGlobal.CELL_SIZE)
@@ -370,6 +435,9 @@ func handle_pipe_chain() -> void:
 		pipeFacing = previewStart.direction_to(Vector2(previewStart.x, currentPreview.y))
 	
 	for pipe in previewPipesStart:
+		if pipeInfo.has(pipe) and forceBuild == true:
+			delete_building(pipe)
+		
 		if previewPipesStart[0] == pipe:
 			if pipeInfo.has(pipe):
 				if pipeInfo[pipe]["Name"] == "Turn Pipe":
@@ -583,7 +651,6 @@ func create_preview_path() -> void:
 		previewDirection = Vector2.INF
 		currentPreview = Vector2.INF
 
-
 func create_preview_path_start() -> Rect2:
 	if previewDirection == Vector2.INF:
 		return Rect2(previewStart, FactoryGlobal.CELL_SIZE)
@@ -686,8 +753,8 @@ func create_dragged_pipes_end() -> Array[String]:
 func spawn_building(location : String) -> void:
 	var trueLocation = str_to_var(location)
 	
-	if is_inside_build_area(trueLocation) == true:
-	#if 1 == 1:
+	#if is_inside_build_area(trueLocation) == true:
+	if 1 == 1:
 		# Check to see if there's a pipe at that location already
 		if pipeInfo.has(location) == false:
 			# Keeps track of whether or not building can be built on that tile
@@ -798,7 +865,7 @@ func spawn_building(location : String) -> void:
 				# Check where all the sources are
 				for source in sourceArray:
 					# Check to see if the buildingPreview overlaps with the source
-					var sourceCoords := get_grid_coordinates(source.global_position)
+					var sourceCoords := get_grid_coordinates(source.position)
 					sourceCoords = get_grid_position(sourceCoords)
 					
 					if cursor_snap() == sourceCoords or previewStart == sourceCoords:
@@ -880,7 +947,7 @@ func spawn_building(location : String) -> void:
 func delete_building(location : String) -> void:
 	if pipeInfo.has(location) == true:
 		for body in %Buildings.get_children():
-			if body.global_position - FactoryGlobal.HALF_CELL_SIZE == str_to_var(location):
+			if body.position - FactoryGlobal.HALF_CELL_SIZE == str_to_var(location):
 				pipeInfo.erase(location)
 				body.queue_free()
 				recalculate_factory()
@@ -890,7 +957,7 @@ func select_building(index : int) -> void:
 	if justBuiltBuildingUnderground == false:
 		if selectedBuildingIndex != -1:
 			selectedBuildingIndex = index
-			selectedBuilding = buildingArray[selectedBuildingIndex]
+			selectedBuilding = FactoryGlobal.buildingArray[selectedBuildingIndex]
 		else: 
 			selectedBuilding = null
 	else:
@@ -909,11 +976,34 @@ func select_building(index : int) -> void:
 		buildingPreviewInstance.get_node("Sprite2D").rotate(deg_to_rad(buildingRotation))
 		buildingPreviewInstance.modulate.a = 0.7
 
+func create_copy_preview() -> void:
+	var holder = CanvasGroup.new()
+	holder.set_name("Holder")
+	holder.modulate.a = 0.7
+	holder.position = cursor_snap()
+	add_child(holder)
+	
+	#var colorRect = ColorRect.new()
+	#colorRect.position = holder.position
+	#colorRect.size = Vector2(holder.width, holder.height)
+	#colorRect.color = "Purple"
+	#holder.add_child(colorRect)
+	
+	for pipe in selectedPipes:
+		var scene = load(pipeInfo[var_to_str(pipe)]["Scene"])
+		var instance = scene.instantiate()
+		holder.add_child(instance)
+		instance.position = Vector2(pipeInfo[var_to_str(pipe)]["X"], pipeInfo[var_to_str(pipe)]["Y"]) + FactoryGlobal.HALF_CELL_SIZE
+		if pipeInfo[var_to_str(pipe)]["Flip"] == true:
+			instance.scale.x = -1
+		instance.get_node("Sprite2D").rotate(deg_to_rad(pipeInfo[var_to_str(pipe)]["Rotation"]))
+
 func rotate_building(direction : int) -> void:
-	buildingRotation += direction
-	if buildingRotation >= 360 or buildingRotation <= -360:
-		buildingRotation = 0
-	buildingPreviewInstance.get_node("Sprite2D").rotate(deg_to_rad(direction))
+	if buildingPreviewInstance:
+		buildingRotation += direction
+		if buildingRotation >= 360 or buildingRotation <= -360:
+			buildingRotation = 0
+		buildingPreviewInstance.get_node("Sprite2D").rotate(deg_to_rad(direction))
 
 func flip_building() -> void:
 	if flip == false:
@@ -929,7 +1019,7 @@ func get_grid_coordinates(gridPosition : Vector2) -> Vector2:
 	return floor(gridPosition / FactoryGlobal.CELL_SIZE)
 
 func cursor_snap() -> Vector2:
-	var cursorPosition := Vector2(get_global_mouse_position().x, get_global_mouse_position().y)
+	var cursorPosition := Vector2(get_local_mouse_position().x, get_local_mouse_position().y)
 	var cursorCoords := get_grid_coordinates(cursorPosition)
 	return get_grid_position(cursorCoords)
 	
@@ -941,7 +1031,7 @@ func is_inside_build_area(trueLocation : Vector2) -> bool:
 		return true
 	else:
 		return false
-
+#
 # Used to calculate how many resources are flowing through the pipes
 # There are no throughput limits
 # Any source connected to the phylactery is immediately counted. There's nothing based on time
@@ -974,7 +1064,7 @@ func recalculate_factory():
 			print("")
 			print("Start")
 			print("**********************")
-			phylacteryLocation = Vector2(-100, -100)
+			phylacteryLocation = var_to_str(Vector2.INF)
 			
 			# Sees if a path exists
 			# If it does, get an array of pipes in the path
@@ -987,12 +1077,11 @@ func recalculate_factory():
 				calculate_flow(path, pipeInfo[item]["Elements"])
 				
 				# If the path includes a phylactery, update the global variables for the values going into it
-				if phylacteryLocation != Vector2(-100, -100):
-					var phylacteryIndex = var_to_str(phylacteryLocation)
-					waterAmount = pipeInfo[phylacteryIndex]["Elements"]["Water"]
-					fireAmount = pipeInfo[phylacteryIndex]["Elements"]["Fire"]
-					airAmount = pipeInfo[phylacteryIndex]["Elements"]["Air"]
-					earthAmount = pipeInfo[phylacteryIndex]["Elements"]["Earth"]
+				if phylacteryLocation != var_to_str(Vector2.INF):
+					waterAmount = pipeInfo[phylacteryLocation]["Elements"]["Water"]
+					fireAmount = pipeInfo[phylacteryLocation]["Elements"]["Fire"]
+					airAmount = pipeInfo[phylacteryLocation]["Elements"]["Air"]
+					earthAmount = pipeInfo[phylacteryLocation]["Elements"]["Earth"]
 	
 	# Update the player's stats based on the resources going through the factory
 	# The values are stored in a global class, which then updates the player
@@ -1021,13 +1110,13 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 		pathDictionary[previousVertex] = {
 			"Connections" : connections,
 			"Joining Pipes" : joiningPipes,
-			"Elements" : pipeInfo[previousVertex]["Elements"]
+			"Elements" : pipeInfo[previousVertex]["Elements"].duplicate()
 		}
 					
 		pathDictionary[currentCoords] = {
 			"Connections" : [],
 			"Joining Pipes" : [],
-			"Elements" : pipeInfo[currentCoords]["Elements"]
+			"Elements" : pipeInfo[currentCoords]["Elements"].duplicate()
 		}
 		joiningPipes.clear()
 		pathFound = true
@@ -1048,13 +1137,13 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 					pathDictionary[previousVertex] = {
 						"Connections" : connections,
 						"Joining Pipes" : joiningPipes,
-						"Elements" : pipeInfo[previousVertex]["Elements"]
+						"Elements" : pipeInfo[previousVertex]["Elements"].duplicate()
 					}
 					
 					pathDictionary[pipe] = {
 						"Connections" : [],
 						"Joining Pipes" : [],
-						"Elements" : pipeInfo[pipe]["Elements"]
+						"Elements" : pipeInfo[pipe]["Elements"].duplicate()
 					}
 					joiningPipes.clear()
 					pathFound = true
@@ -1073,7 +1162,7 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 						pathDictionary[previousVertex] = {
 							"Connections" : connections,
 							"Joining Pipes" : joiningPipes,
-							"Elements" : pipeInfo[previousVertex]["Elements"]
+							"Elements" : pipeInfo[previousVertex]["Elements"].duplicate()
 						}
 							
 						joiningPipes.clear()
@@ -1093,7 +1182,7 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 						pathDictionary[previousVertex] = {
 							"Connections" : connections,
 							"Joining Pipes" : joiningPipes,
-							"Elements" : pipeInfo[previousVertex]["Elements"]
+							"Elements" : pipeInfo[previousVertex]["Elements"].duplicate()
 						}
 						
 						previousVertex = pipe
@@ -1122,7 +1211,7 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 			reachedEnd = true
 			
 			if pipeInfo[pipe]["Name"] == "Phylactery":
-				phylacteryLocation = Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"])
+				phylacteryLocation = var_to_str(Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"]))
 	
 	if reachedEnd == true:
 		return pathDictionary
@@ -1134,46 +1223,46 @@ func calculate_flow(path : Dictionary[String, Dictionary], elements : Dictionary
 	var isLooping : bool = false
 	
 	for pipe in path:
-		if path[pipe].has("Connections"):
-			for connection in path[pipe]["Connections"]:
-				path[connection]["Elements"] = path[pipe]["Elements"].duplicate()
-				
 		if pipeInfo[pipe]["Name"] == "Split Pipe":
-			if path[pipe].has("Connections"):
+			if path[pipe]["Connections"] != []:
 				if is_splitter_balanced(path, pipe):
 					for connection in path[pipe]["Connections"]:
-						path[connection]["Split"] = true
+						for element in path[pipe]["Elements"]:
+							if path.has(connection):
+								path[connection]["Elements"][element] += path[pipe]["Elements"][element] / 2
+				else:
+					for connection in path[pipe]["Connections"]:
+						for element in path[pipe]["Elements"]:
+							if path.has(connection):
+								path[connection]["Elements"][element] += path[pipe]["Elements"][element]
+					
 	
 		elif pipeInfo[pipe]["Name"] == "Merge Pipe":
-			if path[pipe].has("Connections"):
+			if path[pipe]["Connections"] != []:
 				loopList =  check_for_pipe_loop(path, pipe, pipe)
 				
 				if loopList != []:
 					isLooping = true
 					for loop in loopList:
 						path[loop]["Looping"] = elements
-	
+						
+		else:
+			if path[pipe]["Connections"] != []:
+				for connection in path[pipe]["Connections"]:
+					if path.has(connection):
+						path[connection]["Elements"] = path[pipe]["Elements"].duplicate()
+
 	for pipe in path:
-		
-		
-		if path[pipe].has("Split"):
-			for element in elements:
-				path[pipe]["Elements"][element] = elements[element] / 2
-		
-		print(pipeInfo[pipe]["Name"])
-		print(path[pipe])
-		print("###########")
-		
 		print("~~~~~~~~~~~~~~~~~~~~")
 		print(pipeInfo[pipe]["Name"])
 		print(path[pipe])
 		print("~~~~~~~~~~~~~~~~~~~~")
-	for pipe in path:
 		if pipeInfo[pipe]["Name"] != "Extractor":
-			for element in elements:
+			for element in path[pipe]["Elements"]:
 				pipeInfo[pipe]["Elements"][element] += path[pipe]["Elements"][element]
 		
-		if path[pipe].has("Joining Pipes"):
+		
+		if path[pipe]["Joining Pipes"] != []:
 			for edge in path[pipe]["Joining Pipes"]:
 				for element in pipeInfo[pipe]["Elements"]:
 					pipeInfo[edge]["Elements"][element] += pipeInfo[pipe]["Elements"][element]
@@ -1188,9 +1277,9 @@ func is_splitter_balanced(path : Dictionary[String, Dictionary], startingPipe : 
 	if connections.size() != 2:
 		return false
 	
-	var firstConnection : Vector2 = connections[0]
-	var secondConnection : Vector2 = connections[1]
-	
+	var firstConnection : String = connections[0]
+	var secondConnection : String = connections[1]
+
 	if does_path_exist(firstConnection, []) == true and does_path_exist(secondConnection, []) == true:
 		return true
 	else:
@@ -1201,7 +1290,7 @@ func check_for_pipe_loop(path : Dictionary[String, Dictionary], startingPipe : S
 	var check : String = startingPipe
 	
 	while true:
-		if path[check].has("Connections"):
+		if path[check]["Connections"] != []:
 			if path[check]["Connections"].size() == 2:
 				var splitMergeList : Array[String] = check_for_pipe_loop(path, path[check]["Connections"][0], mergePipeCheck)
 				if splitMergeList != []:
@@ -1230,7 +1319,7 @@ func is_endpoint(pipeName : String) -> bool:
 	else: 
 		return false
 
-func does_path_exist(item : Vector2, mergerList : Array[Vector2]) -> bool:
+func does_path_exist(item : String, mergerList : Array[Vector2]) -> bool:
 	# The current pipe being checked
 	var current = pipeInfo[item]
 	
@@ -1261,7 +1350,8 @@ func does_path_exist(item : Vector2, mergerList : Array[Vector2]) -> bool:
 		
 		# Loop through all the pipes until you've found an end point or the next pipe in the chain
 		for pipe in pipeInfo:
-			if pipe == next:
+			if pipe == next \
+			or (check == "Split Pipe" and pipe == pipeInfo[currentCoords]["Split Gives"]):
 				if is_endpoint(pipeInfo[pipe]["Name"]):
 					return true
 				

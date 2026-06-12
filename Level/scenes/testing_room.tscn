@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://dpxba218vm1lf"]
 
-[ext_resource type="Script" uid="uid://2nbqb7161hkw" path="res://Level/scripts/level_bounds.gd" id="1_yv6bu"]
-[ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://Buildings/source.tscn" id="2_0bb7k"]
-[ext_resource type="PackedScene" uid="uid://cj8qd2tgxkfr3" path="res://Buildings/building_wheel.tscn" id="2_ba24s"]
-[ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://Buildings/scripts/grid.gd" id="3_0bb7k"]
-[ext_resource type="PackedScene" uid="uid://b13tqsemuydqa" path="res://Level/scenes/level_transition.tscn" id="3_8mwx7"]
-[ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://Level/scenes/player_spawn.tscn" id="4_yv6bu"]
+[ext_resource type="Script" uid="uid://2nbqb7161hkw" path="res://level/scripts/level_bounds.gd" id="1_yv6bu"]
+[ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://buildings/source.tscn" id="2_0bb7k"]
+[ext_resource type="PackedScene" uid="uid://cj8qd2tgxkfr3" path="res://buildings/building_wheel.tscn" id="2_ba24s"]
+[ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://buildings/scripts/grid.gd" id="3_0bb7k"]
+[ext_resource type="PackedScene" uid="uid://b13tqsemuydqa" path="res://level/scenes/level_transition.tscn" id="3_8mwx7"]
+[ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://level/scenes/player_spawn.tscn" id="4_yv6bu"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_y0dcm"]
 size = Vector2(1154, 40)
