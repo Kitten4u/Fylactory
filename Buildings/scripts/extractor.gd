@@ -7,7 +7,7 @@ const GIVES_LEFT := Vector2(1, 0)
 
 const TYPE : String = "uid://dxqdm37qygx70"
 
-static func get_extractor_gives(building_rotation : int, flip : bool) -> Vector2:
+static func get_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		return GIVES_UP
 	elif  building_rotation == 90 or building_rotation == -270:

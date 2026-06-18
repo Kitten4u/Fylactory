@@ -12,7 +12,7 @@ const RECIEVES_LEFT := Vector2(-1, 0)
 
 const TYPE : String = "uid://cqy8ue3p87kvi"
 
-static func get_turn_pipe_gives(building_rotation : int, flip : bool) -> Vector2:
+static func get_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		if flip == false:
 			return GIVES_UP
@@ -30,7 +30,7 @@ static func get_turn_pipe_gives(building_rotation : int, flip : bool) -> Vector2
 	else:
 		return Vector2(100, 100)
 
-static func get_turn_pipe_recieves(building_rotation : int, flip : bool) -> Vector2:
+static func get_recieves(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		return RECIEVES_UP
 	elif  building_rotation == 90 or building_rotation == -270:

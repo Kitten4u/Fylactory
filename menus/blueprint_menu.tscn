@@ -25,7 +25,40 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.47397572, 0.47397572, 0.47397572, 1)
 
+[node name="Display" type="Control" parent="BlueprintBuilder" unique_id=772852153]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 301.0
+offset_top = 101.0
+offset_right = -2.0
+offset_bottom = -51.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Grid" type="Node2D" parent="BlueprintBuilder/Display" unique_id=1877359882]
+unique_name_in_owner = true
+script = ExtResource("1_3ij86")
+
+[node name="BuildingWheel" parent="BlueprintBuilder/Display/Grid" unique_id=1894281909 instance=ExtResource("2_16x1d")]
+offset_left = 119.0
+offset_top = 53.0
+offset_right = 119.0
+offset_bottom = 53.0
+
+[node name="Buildings" type="CanvasGroup" parent="BlueprintBuilder" unique_id=643977521]
+unique_name_in_owner = true
+position = Vector2(301, 101)
+
+[node name="ClickTimer" type="Timer" parent="BlueprintBuilder" unique_id=1640144013]
+unique_name_in_owner = true
+wait_time = 0.05
+one_shot = true
+
 [node name="BottomButtons" type="ColorRect" parent="BlueprintBuilder" unique_id=194130379]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 1
 anchors_preset = 12
@@ -60,6 +93,11 @@ text = "Clear"
 layout_mode = 2
 text = "Save
 "
+
+[node name="BuildButton" type="Button" parent="BlueprintBuilder/BottomButtons/HBoxContainer" unique_id=542711706]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Build"
 
 [node name="CloseButton" type="Button" parent="BlueprintBuilder/BottomButtons/HBoxContainer" unique_id=1158335662]
 layout_mode = 2
@@ -99,38 +137,6 @@ grow_vertical = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 32
 text = "Blueprints"
-
-[node name="Display" type="MarginContainer" parent="BlueprintBuilder" unique_id=1757739994]
-unique_name_in_owner = true
-clip_contents = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 301.0
-offset_top = 101.0
-offset_right = -2.0
-offset_bottom = -51.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Grid" type="Node2D" parent="BlueprintBuilder/Display" unique_id=1877359882]
-unique_name_in_owner = true
-script = ExtResource("1_3ij86")
-
-[node name="BuildingWheel" parent="BlueprintBuilder/Display/Grid" unique_id=1894281909 instance=ExtResource("2_16x1d")]
-offset_left = 119.0
-offset_top = 53.0
-offset_right = 119.0
-offset_bottom = 53.0
-
-[node name="Buildings" type="CanvasGroup" parent="BlueprintBuilder/Display/Grid" unique_id=643977521]
-unique_name_in_owner = true
-
-[node name="ClickTimer" type="Timer" parent="BlueprintBuilder/Display/Grid" unique_id=1640144013]
-unique_name_in_owner = true
-wait_time = 0.05
-one_shot = true
 
 [node name="EnterBlueprintName" type="Control" parent="." unique_id=1275265131]
 unique_name_in_owner = true
@@ -176,10 +182,22 @@ text = "Enter Blueprint Name"
 [node name="BlueprintName" type="LineEdit" parent="EnterBlueprintName/ColorRect/VBoxContainer" unique_id=732329892]
 unique_name_in_owner = true
 layout_mode = 2
+placeholder_text = "Enter Name"
+emoji_menu_enabled = false
 
-[node name="BlueprintAcceptButton" type="Button" parent="EnterBlueprintName/ColorRect/VBoxContainer" unique_id=1148145268]
+[node name="HBoxContainer" type="HBoxContainer" parent="EnterBlueprintName/ColorRect/VBoxContainer" unique_id=1851189770]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="BlueprintAcceptButton" type="Button" parent="EnterBlueprintName/ColorRect/VBoxContainer/HBoxContainer" unique_id=1148145268]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "OK"
+
+[node name="BlueprintCancelButton" type="Button" parent="EnterBlueprintName/ColorRect/VBoxContainer/HBoxContainer" unique_id=356356953]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Cancel"
 
 [node name="BlueprintEmptyError" type="Control" parent="." unique_id=1627143720]
 unique_name_in_owner = true
@@ -304,10 +322,22 @@ grow_vertical = 0
 theme_override_font_sizes/font_size = 30
 text = "No"
 
+[connection signal="mouse_entered" from="BlueprintBuilder/BottomButtons" to="." method="_on_bottom_buttons_mouse_entered"]
+[connection signal="mouse_exited" from="BlueprintBuilder/BottomButtons" to="." method="_on_bottom_buttons_mouse_exited"]
+[connection signal="mouse_entered" from="BlueprintBuilder/BottomButtons/HBoxContainer/ClearButton" to="." method="_on_bottom_buttons_mouse_entered"]
+[connection signal="mouse_exited" from="BlueprintBuilder/BottomButtons/HBoxContainer/ClearButton" to="." method="_on_bottom_buttons_mouse_exited"]
 [connection signal="pressed" from="BlueprintBuilder/BottomButtons/HBoxContainer/ClearButton" to="." method="_on_clear_button_pressed"]
+[connection signal="mouse_entered" from="BlueprintBuilder/BottomButtons/HBoxContainer/SaveButton" to="." method="_on_bottom_buttons_mouse_entered"]
+[connection signal="mouse_exited" from="BlueprintBuilder/BottomButtons/HBoxContainer/SaveButton" to="." method="_on_bottom_buttons_mouse_exited"]
 [connection signal="pressed" from="BlueprintBuilder/BottomButtons/HBoxContainer/SaveButton" to="." method="_on_save_button_pressed"]
+[connection signal="mouse_entered" from="BlueprintBuilder/BottomButtons/HBoxContainer/BuildButton" to="." method="_on_bottom_buttons_mouse_entered"]
+[connection signal="mouse_exited" from="BlueprintBuilder/BottomButtons/HBoxContainer/BuildButton" to="." method="_on_bottom_buttons_mouse_exited"]
+[connection signal="pressed" from="BlueprintBuilder/BottomButtons/HBoxContainer/BuildButton" to="." method="_on_build_button_pressed"]
+[connection signal="mouse_entered" from="BlueprintBuilder/BottomButtons/HBoxContainer/CloseButton" to="." method="_on_bottom_buttons_mouse_entered"]
+[connection signal="mouse_exited" from="BlueprintBuilder/BottomButtons/HBoxContainer/CloseButton" to="." method="_on_bottom_buttons_mouse_exited"]
 [connection signal="pressed" from="BlueprintBuilder/BottomButtons/HBoxContainer/CloseButton" to="." method="_on_close_button_pressed"]
-[connection signal="pressed" from="EnterBlueprintName/ColorRect/VBoxContainer/BlueprintAcceptButton" to="." method="_on_blueprint_accept_button_pressed"]
+[connection signal="pressed" from="EnterBlueprintName/ColorRect/VBoxContainer/HBoxContainer/BlueprintAcceptButton" to="." method="_on_blueprint_accept_button_pressed"]
+[connection signal="pressed" from="EnterBlueprintName/ColorRect/VBoxContainer/HBoxContainer/BlueprintCancelButton" to="." method="_on_blueprint_cancel_button_pressed"]
 [connection signal="pressed" from="BlueprintEmptyError/ColorRect/BlueprintEmptyButton" to="." method="_on_blueprint_empty_button_pressed"]
 [connection signal="pressed" from="BlueprintNameError/ColorRect/BlueprintOverwrite" to="." method="_on_blueprint_overwrite_pressed"]
 [connection signal="pressed" from="BlueprintNameError/ColorRect/BlueprintNoOverwrite" to="." method="_on_blueprint_no_overwrite_pressed"]

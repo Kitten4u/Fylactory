@@ -35,6 +35,9 @@ var earthAmount : float = 0
 var player : Player
 var activePipeLayout : Dictionary
 var blueprintDictionary : Dictionary
+var selectedBlueprint : Dictionary
+var blueprintChunk : Dictionary
+var disableInput : bool
 
 func _ready() -> void:
 	buildingArray.append(normalPipe)

@@ -17,7 +17,7 @@ const MERGES_LEFT := Vector2(0, 1)
 
 const TYPE : String = "uid://cvfg3ivtnqdxs"
 
-static func get_merge_pipe_gives(building_rotation : int, flip : bool) -> Vector2:
+static func get_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		return GIVES_UP
 	elif  building_rotation == 90 or building_rotation == -270:
@@ -35,7 +35,7 @@ static func get_merge_pipe_gives(building_rotation : int, flip : bool) -> Vector
 	else:
 		return Vector2(100, 100)
 
-static func get_merge_pipe_recieves(building_rotation : int, flip : bool) -> Vector2:
+static func get_recieves(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:
 		if flip == false:
 			return RECIEVES_UP

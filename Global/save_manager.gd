@@ -45,7 +45,7 @@ func save_game() -> void:
 		"Y" : player.global_position.y,
 		"HP" : player.health,
 		"Factory" : FactoryGlobal.activePipeLayout,
-		"Blueprints" : {},
+		"Blueprints" : FactoryGlobal.blueprintDictionary,
 		"Discovered Areas" : discoveredAreas,
 		"Persistent Data" : persistentData
 	}
@@ -62,6 +62,7 @@ func load_game() -> void:
 	var scenePath = saveData.get("Scene", "uid://dpxba218vm1lf")
 	
 	FactoryGlobal.activePipeLayout = saveData.get("Factory", {}).duplicate(true)
+	FactoryGlobal.blueprintDictionary = saveData.get("Blueprints", {}).duplicate(true)
 	discoveredAreas = saveData.get("Discovered Areas", [])
 	persistentData = saveData.get("Persistent Data", {})
 	

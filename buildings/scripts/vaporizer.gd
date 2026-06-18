@@ -7,7 +7,7 @@ const RECIEVES_LEFT := Vector2(-1, 0)
 
 const TYPE : String = "uid://ct6w6os54d0fy"
 
-static func get_vaporizer_recieves(building_rotation : int) -> Vector2:
+static func get_recieves(building_rotation : int, _flip : bool) -> Vector2:
 	if building_rotation >= 360:
 		building_rotation -= 360
 	elif building_rotation <= -360:
