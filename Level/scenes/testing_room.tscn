@@ -50,7 +50,7 @@ offset_bottom = 18.0
 color = Color(0, 0, 1, 1)
 
 [node name="Source2" parent="Grid/Sources" unique_id=478262520 instance=ExtResource("2_0bb7k")]
-position = Vector2(1027, 512)
+position = Vector2(1027, 527)
 type = Array[String](["Air"])
 amount = Array[float]([800.0])
 
@@ -62,7 +62,7 @@ offset_bottom = 18.0
 color = Color(0, 1, 0, 1)
 
 [node name="Source3" parent="Grid/Sources" unique_id=1124809623 instance=ExtResource("2_0bb7k")]
-position = Vector2(194, 272)
+position = Vector2(176, 272)
 type = Array[String](["Water"])
 amount = Array[float]([200.0])
 

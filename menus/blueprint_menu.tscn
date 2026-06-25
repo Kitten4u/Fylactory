@@ -31,10 +31,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 301.0
-offset_top = 101.0
-offset_right = -2.0
-offset_bottom = -51.0
+offset_left = 300.0
+offset_top = 100.0
+offset_right = -3.0
+offset_bottom = -52.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -50,7 +50,7 @@ offset_bottom = 53.0
 
 [node name="Buildings" type="CanvasGroup" parent="BlueprintBuilder" unique_id=643977521]
 unique_name_in_owner = true
-position = Vector2(301, 101)
+position = Vector2(300, 100)
 
 [node name="ClickTimer" type="Timer" parent="BlueprintBuilder" unique_id=1640144013]
 unique_name_in_owner = true

@@ -40,7 +40,7 @@ offset_bottom = 21.0
 unique_name_in_owner = true
 
 [node name="Source" parent="Grid/Sources" unique_id=449896276 instance=ExtResource("2_cpv4j")]
-position = Vector2(212, 386)
+position = Vector2(224, 379)
 type = Array[String](["Fire"])
 amount = Array[float]([200.0])
 
@@ -52,7 +52,7 @@ offset_bottom = 17.0
 color = Color(1, 0, 0, 1)
 
 [node name="Source2" parent="Grid/Sources" unique_id=1525840648 instance=ExtResource("2_cpv4j")]
-position = Vector2(379, 245)
+position = Vector2(376, 229)
 type = Array[String](["Fire", "Earth"])
 amount = Array[float]([200.0, 400.0])
 
@@ -64,7 +64,7 @@ offset_bottom = 18.0
 color = Color(1, 0, 0, 1)
 
 [node name="Source3" parent="Grid/Sources" unique_id=1053462891 instance=ExtResource("2_cpv4j")]
-position = Vector2(994, 420)
+position = Vector2(975, 426)
 type = Array[String](["Earth"])
 amount = Array[float]([600.0])
 
