@@ -1212,6 +1212,8 @@ func spawn_building(location : String) -> void:
 
 func delete_building(location : String) -> void:
 	if pipeInfo.has(location) == true:
+		if pipeInfo[location]["Name"] == "Phylactery":
+			phylacteryLocation = var_to_str(Vector2.INF)
 		for body in %Buildings.get_children():
 			if body.position - FactoryGlobal.HALF_CELL_SIZE == str_to_var(location):
 				pipeInfo.erase(location)
@@ -1328,18 +1330,14 @@ func recalculate_factory():
 					fireAmount = pipeInfo[phylacteryLocation]["Elements"]["Fire"]
 					airAmount = pipeInfo[phylacteryLocation]["Elements"]["Air"]
 					earthAmount = pipeInfo[phylacteryLocation]["Elements"]["Earth"]
-					
-					
-					
-					# Update the player's stats based on the resources going through the factory
-					# The values are stored in a global class, which then updates the player
-					FactoryGlobal.get_elements_total(pipeInfo[phylacteryLocation]["Elements"])
 	
-	if phylacteryLocation == var_to_str(Vector2.INF) or pipeInfo[phylacteryLocation]["Elements"] == {"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0}:
-		FactoryGlobal.activePhylacteryValues.erase(get_parent().name)
-		FactoryGlobal.get_elements_total({"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0})
+	if phylacteryLocation == var_to_str(Vector2.INF):
+		reset_factory_global_elements()
 	else:
-		FactoryGlobal.activePhylacteryValues[get_parent().name] = {"Water" : waterAmount, "Fire" : fireAmount, "Air" : airAmount, "Earth" : earthAmount}
+		if pipeInfo[phylacteryLocation]["Elements"] == { "Water": 0.0, "Fire": 0.0, "Air": 0.0, "Earth": 0.0 }:
+			reset_factory_global_elements()
+		else:
+			FactoryGlobal.activePhylacteryValues[get_parent().name] = {"Water" : waterAmount, "Fire" : fireAmount, "Air" : airAmount, "Earth" : earthAmount}
 	
 	FactoryGlobal.activePipeLayout[get_parent().name] = pipeInfo.duplicate(true)
 	print("Water")
@@ -1839,6 +1837,10 @@ func does_path_exist(item : String, mergerList : Array[String]) -> bool:
 					break
 	
 	return true
+
+func reset_factory_global_elements() -> void:
+	FactoryGlobal.activePhylacteryValues.erase(get_parent().name)
+	FactoryGlobal.get_elements_total({"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0})
 #endregion
 
 #region Legacy code saved in case of emergency
