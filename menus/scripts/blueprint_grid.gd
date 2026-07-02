@@ -8,6 +8,7 @@ func _ready() -> void:
 	gridParent = get_parent().get_parent()
 	
 	# Create the building preview
+	selectedBuilding = FactoryGlobal.selectedBuildingBetweenRooms
 	buildingPreviewInstance = selectedBuilding.instantiate()
 	add_child(buildingPreviewInstance)
 	buildingPreviewInstance.modulate.a = 0.7

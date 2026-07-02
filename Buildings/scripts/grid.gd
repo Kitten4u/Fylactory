@@ -13,15 +13,16 @@ var waitForBlueprintMenuClose : bool = false
 #endregion
 
 #region Build Mode Information
-var selectedBuilding = FactoryGlobal.normalPipe
-var selectedBuildingIndex : int = 0
+var selectedBuilding
+var selectedBuildingIndex
 var buildingPreviewInstance
 var pipeInfo : Dictionary
 var buildingRotation : int = 0
 var flip : bool = false
 var justBuiltBuildingUnderground : bool = false
 var undergroundLocation : String
-var phylacteryLocation : String
+var phylacteryLocation : String = var_to_str(Vector2.INF)
+var foundPhylactery : bool = false
 #endregion
 
 #region Preview for Pipe Dragging Path
@@ -68,6 +69,7 @@ func _ready() -> void:
 	gridParent = get_parent()
 	
 	#region Create the building preview
+	selectedBuilding = FactoryGlobal.selectedBuildingBetweenRooms
 	buildingPreviewInstance = selectedBuilding.instantiate()
 	add_child(buildingPreviewInstance)
 	buildingPreviewInstance.modulate.a = 0.7
@@ -89,14 +91,14 @@ func _ready() -> void:
 				await get_tree().process_frame
 			
 			var building = buildingScene.instantiate()
+			if pipeInfo[pipe]["Name"] == "Phylactery":
+				phylacteryLocation = pipe
 			building.position = Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"]) + FactoryGlobal.HALF_CELL_SIZE
 			if pipeInfo[pipe]["Flip"] == true:
 				building.scale.x = -1
 			building.get_node("Sprite2D").rotate(deg_to_rad(pipeInfo[pipe]["Rotation"]))
 			building.add_to_group("Buildings")
 			%Buildings.add_child(building)
-		
-		recalculate_factory()
 		#endregion
 
 func _process(_delta: float) -> void:
@@ -393,7 +395,6 @@ func _input(event: InputEvent) -> void:
 								pipeDragging = true
 								clickTimer.start(0.05)
 								preDragBuilding = selectedBuilding
-								preDragBuildingIndex = selectedBuildingIndex
 								preDragBuildingFlip = flip
 								preDragBuildingRotation = buildingRotation
 							
@@ -1155,6 +1156,7 @@ func spawn_building(location : String) -> void:
 							return
 				
 				canBuild = true
+				phylacteryLocation = location
 				buildingScene = "uid://rwrddigeppfh"
 				nameBuilding = "Phylactery"
 				var vectorRecieves = get_grid_coordinates(trueLocation) + Phylactery.get_recieves(buildingRotation, flip)
@@ -1234,6 +1236,7 @@ func select_building(index : int) -> void:
 	else:
 		selectedBuilding = FactoryGlobal.undergroundPipeEnd
 	
+	FactoryGlobal.selectedBuildingBetweenRooms = selectedBuilding
 	# Delete old preview
 	if buildingPreviewInstance:
 		buildingPreviewInstance.queue_free()
@@ -1309,7 +1312,7 @@ func recalculate_factory():
 			print("")
 			print("Start")
 			print("**********************")
-			phylacteryLocation = var_to_str(Vector2.INF)
+			foundPhylactery = false
 			
 			# Sees if a path exists
 			# If it does, get an array of pipes in the path
@@ -1320,18 +1323,25 @@ func recalculate_factory():
 				calculate_flow(path)
 				
 				# If the path includes a phylactery, update the global variables for the values going into it
-				if phylacteryLocation != var_to_str(Vector2.INF):
+				if foundPhylactery == true:
 					waterAmount = pipeInfo[phylacteryLocation]["Elements"]["Water"]
 					fireAmount = pipeInfo[phylacteryLocation]["Elements"]["Fire"]
 					airAmount = pipeInfo[phylacteryLocation]["Elements"]["Air"]
 					earthAmount = pipeInfo[phylacteryLocation]["Elements"]["Earth"]
+					
+					
+					
+					# Update the player's stats based on the resources going through the factory
+					# The values are stored in a global class, which then updates the player
+					FactoryGlobal.get_elements_total(pipeInfo[phylacteryLocation]["Elements"])
 	
-	# Update the player's stats based on the resources going through the factory
-	# The values are stored in a global class, which then updates the player
-	FactoryGlobal.get_total_water(waterAmount)
-	FactoryGlobal.get_total_fire(fireAmount)
-	FactoryGlobal.get_total_air(airAmount)
-	FactoryGlobal.get_total_earth(earthAmount)
+	if phylacteryLocation == var_to_str(Vector2.INF) or pipeInfo[phylacteryLocation]["Elements"] == {"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0}:
+		FactoryGlobal.activePhylacteryValues.erase(get_parent().name)
+		FactoryGlobal.get_elements_total({"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0})
+	else:
+		FactoryGlobal.activePhylacteryValues[get_parent().name] = {"Water" : waterAmount, "Fire" : fireAmount, "Air" : airAmount, "Earth" : earthAmount}
+	
+	FactoryGlobal.activePipeLayout[get_parent().name] = pipeInfo.duplicate(true)
 	print("Water")
 	print(waterAmount)
 
@@ -1342,7 +1352,7 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 	var joiningPipes : Array[String] = []
 	var pathFound : bool = false
 	
-	# If the end point is right next to a splitter, needs an extra check
+	# Everything next to a splitter needs an extra check
 	if is_endpoint(current["Name"]) == true:
 		var connections : Array[String] = [currentCoords]
 		
@@ -1364,6 +1374,46 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 		joiningPipes.clear()
 		pathFound = true
 	
+	elif current["Name"] == "Merge Pipe":
+		var connections : Array[String] = [currentCoords]
+		
+		if pathDictionary.has(previousVertex):
+			connections = pathDictionary[previousVertex]["Connections"] + connections
+			joiningPipes = pathDictionary[previousVertex]["Joining Pipes"] + joiningPipes
+		
+		pathDictionary[previousVertex] = {
+			"Connections" : connections,
+			"Joining Pipes" : joiningPipes,
+			"Elements" : pipeInfo[previousVertex]["Elements"].duplicate()
+		}
+		
+		joiningPipes.clear()
+		previousVertex = currentCoords
+		
+		# In case of a pipe that loops around
+		if pathDictionary.has(currentCoords):
+			pathFound = true
+	
+	elif current["Name"] == "Split Pipe":
+		var connections : Array[String] = [currentCoords]
+		
+		if pathDictionary.has(previousVertex):
+			connections = pathDictionary[previousVertex]["Connections"] + connections
+			joiningPipes = pathDictionary[previousVertex]["Joining Pipes"] + joiningPipes
+		
+		pathDictionary[previousVertex] = {
+			"Connections" : connections,
+			"Joining Pipes" : joiningPipes,
+			"Elements" : pipeInfo[previousVertex]["Elements"].duplicate()
+		}
+		
+		joiningPipes.clear()
+		previousVertex = currentCoords
+		
+		if pipeInfo.has(current["Split Gives"]):
+			var splitDictionary = find_pipe_path(current["Split Gives"], pathDictionary, previousVertex)
+			pathDictionary.merge(splitDictionary)
+		
 	while pathFound == false:
 		for pipe in pipeInfo:
 			
@@ -1455,7 +1505,7 @@ func find_pipe_path(item : String, pathDictionary : Dictionary[String, Dictionar
 			reachedEnd = true
 			
 			if pipeInfo[pipe]["Name"] == "Phylactery":
-				phylacteryLocation = var_to_str(Vector2(pipeInfo[pipe]["X"], pipeInfo[pipe]["Y"]))
+				foundPhylactery = true
 	
 	if reachedEnd == true:
 		return pathDictionary
@@ -1486,100 +1536,125 @@ func calculate_flow(path : Dictionary[String, Dictionary]) -> void:
 							path[connection]["Elements"][element] += path[pipe]["Elements"][element]
 		
 				if pipeInfo[pipe]["Name"] == "Merge Pipe":
+					print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+					print("Checking for Recursive Pipe")
+					print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 					foundMergePipes.append(pipe)
-					var mergerLoop : Array[String] =  check_for_pipe_loop(path, pipe, pipe)
+					var mergerLoop : Array[String] =  check_for_pipe_loop(path, [], pipe, pipe)
 
 					if mergerLoop!= []:
+						print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+						print("Loop Complete")
+						print(mergerLoop)
+						print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 						loopList.append(mergerLoop)
-
+	
 	if loopList != []:
+		print("-----------------------------------")
+		print("loopList Before")
+		print(loopList)
+		print("-----------------------------------")
+		# Separate loops that are joined together because there's more than one recursive loop on the merger
+		var loopsNeedFixing : Dictionary[int, int] = {}
+		for loopIndex in loopList.size():
+			for index in loopList[loopIndex].size():
+				if index != loopList[loopIndex].size() - 1:
+					if path[loopList[loopIndex][index]]["Connections"].has(loopList[loopIndex][index + 1]) == false:
+						loopsNeedFixing[loopIndex] = index + 1
+						break
+		print("-----------------------------------")
+		print("loopsNeedFixing")
+		print(loopsNeedFixing)
+		print("-----------------------------------")
+		
+		if loopsNeedFixing != {}:
+			var splitLoops = []
+			for loop in loopsNeedFixing:
+				var splitLoop = loopList[loop].slice(loopsNeedFixing[loop])
+				loopList[loop] = loopList[loop].slice(0, loopsNeedFixing[loop])
+				var startLoop = []
+				for pipe in loopList[loop]:
+					startLoop.append(pipe)
+					if path[pipe]["Connections"].has(splitLoop[0]):
+						break
+				
+				startLoop.append_array(splitLoop)
+				splitLoops.append(startLoop)
+			
+			var splitLoopsIndex = 0
+			var indexOffset = 0
+			for loop in loopsNeedFixing:
+				loopList.insert(loop + 1 + indexOffset, splitLoops[splitLoopsIndex])
+				indexOffset += 1
+				splitLoopsIndex += 1
+		print("-----------------------------------")
+		print("loopList After Loop Split")
+		print(loopList)
+		print("-----------------------------------")
+		
+		# Remove duplicate loops
+		# If there's more than one merger in the path this often results in loops that use identical pipes
 		var sortedLoopList = loopList.duplicate(true)
-		var seenArrays = []
 		for list in sortedLoopList:
 			list.sort()
+		
+		var seenArrays = []
+		var removeArrays = []
 		for index in sortedLoopList.size():
 			if seenArrays.has(sortedLoopList[index]):
-				loopList.remove_at(index)
+				removeArrays.append(index)
 			else:
 				seenArrays.append(sortedLoopList[index])
 		
-		var count = 0
-		while count <= 100:
-			count += 1
-			var index = -1
-			for pipeLoop in loopList:
-				index += 1
-				var originalPipe = pipeLoop[0]
-				if count == 1:
-					for pipe in pipeLoop:
-						if pipe == originalPipe:
-							if path[originalPipe].has("Looping"):
-								path[originalPipe]["Looping"][index] = {"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0}
-							else:
-								path[originalPipe]["Looping"] = { index : {"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0} }
-							for element in path[originalPipe]["Elements"]:
-								path[originalPipe]["Looping"][index][element] = path[originalPipe]["Elements"][element]
-						else:
-							if path[pipe].has("Looping"):
-								path[pipe]["Looping"][index] = {"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0}
-							else:
-								path[pipe]["Looping"] = { index : {"Water" : 0, "Fire" : 0, "Air" : 0, "Earth" : 0} }
-				else:
-					for pipe in pipeLoop:
-						if pipe != originalPipe:
-							for element in path[originalPipe]["Elements"]:
-								path[pipe]["Looping"][index][element] = 0
-							
-				for pipe in pipeLoop:
-					if path[pipe]["Connections"] != []:
-						if pipeInfo[pipe]["Name"] == "Split Pipe" and is_splitter_balanced(path, pipe):
-							for connection in path[pipe]["Connections"]:
-								if path.has(connection) and pipeLoop.has(connection):
-									if connection != originalPipe:
-										for element in path[pipe]["Elements"]:
-											path[connection]["Looping"][index][element] += path[pipe]["Looping"][index][element] / 2
-									else: 
-										for element in path[pipe]["Elements"]:
-											path[connection]["Looping"][index][element] = path[pipe]["Looping"][index][element] / 2 + path[connection]["Elements"][element]
-											
-						else:
-							for connection in path[pipe]["Connections"]:
-								if path.has(connection) and pipeLoop.has(connection):
-									if connection != originalPipe:
-										for element in path[pipe]["Elements"]:
-											path[connection]["Looping"][index][element] += path[pipe]["Looping"][index][element]
-									else:
-										for element in path[pipe]["Elements"]:
-											path[connection]["Looping"][index][element] = path[pipe]["Looping"][index][element] + path[connection]["Elements"][element]
-										
-		for pipeLoop in loopList:
-			for pipe in pipeLoop:
-				for element in path[pipe]["Elements"]:
-						path[pipe]["Elements"][element] = 0
-				for loop in path[pipe]["Looping"]:
-					for element in path[pipe]["Elements"]:
-						path[pipe]["Elements"][element] += path[pipe]["Looping"][loop][element]
+		removeArrays.reverse()
+		for index in removeArrays:
+			loopList.remove_at(index)
 		
-		for pipe in path:
-			if pipeInfo[pipe]["Name"] != "Extractor" and path[pipe].has("Looping") == false:
-				for element in path[pipe]["Elements"]:
-					path[pipe]["Elements"][element] = 0
+		print("-----------------------------------")
+		print("loopList After Duplicate Prune")
+		print(loopList)
+		print("-----------------------------------")
 		
-		for pipe in path:
-			if path[pipe]["Connections"] != []:
-				if pipeInfo[pipe]["Name"] == "Split Pipe" and is_splitter_balanced(path, pipe):
-					for connection in path[pipe]["Connections"]:
-						if path.has(connection):
-							if path[connection].has("Looping") == false:
-								for element in path[pipe]["Elements"]:
-									path[connection]["Elements"][element] += path[pipe]["Elements"][element] / 2
-									
-				else:
-					for connection in path[pipe]["Connections"]:
-						if path.has(connection):
-							if path[connection].has("Looping") == false:
-								for element in path[pipe]["Elements"]:
-									path[connection]["Elements"][element] += path[pipe]["Elements"][element]
+		# Remove any useless loops
+		# All loops should reach an end point
+		removeArrays.clear()
+		var loopIndex = -1
+		for loop in loopList:
+			loopIndex += 1
+			var foundExit : bool = false
+			var recentSplitter : String = ""
+			
+			for pipe in loop:
+				if foundExit == true:
+					break
+				if path[pipe]["Connections"].size() == 2:
+					print("Recent Splitter")
+					print(recentSplitter)
+					if recentSplitter != "":
+						for connection in path[pipe]["Connections"]:
+							if loop.has(connection) == false:
+								print("Connection")
+								print(connection)
+								print(does_path_exist(connection, []))
+								print("---")
+								if does_path_exist(connection, []) == true:
+									print("Found something outside")
+									foundExit = true
+									break
+				
+				if recentSplitter == "" and pipeInfo[pipe]["Name"] == "Split Pipe":
+					recentSplitter = pipe
+				if foundExit == false and pipe == loop[-1]:
+					print("Did not find something outside")
+					removeArrays.append(loopIndex)
+
+		removeArrays.reverse()
+		for index in removeArrays:
+			loopList.remove_at(index)
+		print("-----------------------------------")
+		print("loopList After Useless Prune")
+		print(loopList)
+		print("-----------------------------------")
 
 	for pipe in path:
 		if pipeInfo[pipe]["Name"] != "Extractor":
@@ -1609,58 +1684,82 @@ func is_splitter_balanced(path : Dictionary[String, Dictionary], startingPipe : 
 		if does_path_exist(secondConnection, []) == true:
 			return true
 		else:
-			var isLooping : Array[String] = check_for_pipe_loop(path, secondConnection, secondConnection)
+			var isLooping : Array[String] = check_for_pipe_loop(path, [], secondConnection, secondConnection)
 			if isLooping != []:
 				return true
 			else: 
 				return false
 	elif does_path_exist(secondConnection, []) == true:
-		var isLooping : Array[String] = check_for_pipe_loop(path, firstConnection, firstConnection)
+		var isLooping : Array[String] = check_for_pipe_loop(path, [], firstConnection, firstConnection)
 		if isLooping != []:
 			return true
 		else: 
 			return false
 	else:
-		return false
+		var isLoopingFirstConnection : Array[String] = check_for_pipe_loop(path, [], firstConnection, firstConnection)
+		var isLoopingSecondConnection : Array[String] = check_for_pipe_loop(path, [], secondConnection, secondConnection)
+		if isLoopingFirstConnection != [] and isLoopingSecondConnection != []:
+			return true
+		else:
+			return false
 
-func check_for_pipe_loop(path : Dictionary[String, Dictionary], startingPipe : String, mergePipeCheck : String) -> Array[String]:
+func check_for_pipe_loop(path : Dictionary[String, Dictionary], parentSplitters : Array[String], startingPipe : String, mergePipeCheck : String) -> Array[String]:
 	var mergePath : Array[String] = []
-	var foundMergers : Array[String] = []
 	var check : String = startingPipe
+	var foundPath : bool = false
+	var firstLoop : bool = true
 	
-	while true:
+	while foundPath == false:
+		foundPath = true
+		if mergePath.has(check) == false:
+			mergePath.append(check)
+		
 		if path.has(check):
 			if path[check]["Connections"] != []:
-				if pipeInfo[check]["Name"] == "Merge Pipe" and check != startingPipe:
-					if foundMergers.has(check):
+				if parentSplitters.has(check):
+					return []
+				elif path[check]["Connections"].has(mergePipeCheck):
+					if path[check]["Connections"].size() == 2 and parentSplitters.has(check) == false:
+						var mergePipeCheckIndex : int = path[check]["Connections"].find(mergePipeCheck)
+						var splitterOtherSide : int = 0
+						if mergePipeCheckIndex == 0:
+							splitterOtherSide = 1
+						parentSplitters.append(check)
+						var splitMergeList = check_for_pipe_loop(path, parentSplitters, path[check]["Connections"][splitterOtherSide], mergePipeCheck)
+						for item in splitMergeList:
+							if mergePath.has(item) == false:
+								mergePath.append(item)
+					
+					return mergePath
+				elif check == startingPipe and check != mergePipeCheck and firstLoop == false:
+					return []
+				elif path[check]["Connections"].size() == 2:
+					parentSplitters.append(check)
+					var splitMergeListFirst = check_for_pipe_loop(path, parentSplitters, path[check]["Connections"][0], mergePipeCheck)
+					var splitMergeListSecond = check_for_pipe_loop(path, parentSplitters, path[check]["Connections"][1], mergePipeCheck)
+					parentSplitters.remove_at(-1)
+					
+					if splitMergeListFirst == [] and splitMergeListSecond == []:
 						return []
+					else:
+						for item in splitMergeListFirst:
+							if mergePath.has(item) == false:
+								mergePath.append(item)
+						
+						for item in splitMergeListSecond:
+							if mergePath.has(item) == false:
+								mergePath.append(item)
 				else:
-					foundMergers.append(check)
-				if path[check]["Connections"].size() == 2:
-					if path[check]["Connections"].has(mergePipeCheck):
-						mergePath.append(check)
-						return mergePath
-					var splitMergeList : Array[String] = check_for_pipe_loop(path, path[check]["Connections"][0], mergePipeCheck)
-					if splitMergeList != []:
-						mergePath.append(check)
-						mergePath.append_array(splitMergeList)
-						return mergePath
-					else: 
-						mergePath.append(check)
-						check = path[check]["Connections"][1]
-				
-				else:
-					mergePath.append(check)
+					foundPath = false
 					check = path[check]["Connections"][0]
-			else:
+			else: 
 				return []
 		else:
 			return []
 		
-		if check == mergePipeCheck:
-			return mergePath
+		firstLoop = false
 	
-	return []
+	return mergePath
 
 func is_endpoint(pipeName : String) -> bool:
 	if pipeName == "Phylactery" \
@@ -1682,13 +1781,16 @@ func does_path_exist(item : String, mergerList : Array[String]) -> bool:
 	# The pipe properties that need to be checked
 	var check = pipeInfo[item]["Name"]
 	var next = pipeInfo[item]["Gives"]
-	
-	# Need an extra check in case the end is right next to a splitter
+	# Need an extra check in case starting pipe is splitter
 	if is_endpoint(check) == true:
 		return true
+	elif check == "Split Pipe":
+		if pipeInfo.has(pipeInfo[item]["Split Gives"]):
+			if does_path_exist(pipeInfo[item]["Split Gives"], mergerList) == true:
+				return true
 	
 	# Check to see if you've gotten to the Phylactery
-	while check != "Phylactery":
+	while true:
 		# The current pipe gets added to the array every loop
 		
 		# Escape the loop if Phylactery is not found
@@ -1700,8 +1802,7 @@ func does_path_exist(item : String, mergerList : Array[String]) -> bool:
 		
 		# Loop through all the pipes until you've found an end point or the next pipe in the chain
 		for pipe in pipeInfo:
-			if pipe == next \
-			or (check == "Split Pipe" and pipe == pipeInfo[currentCoords]["Split Gives"]):
+			if pipe == next:
 				if is_endpoint(pipeInfo[pipe]["Name"]):
 					return true
 				

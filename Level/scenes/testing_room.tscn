@@ -78,7 +78,7 @@ unique_name_in_owner = true
 
 [node name="LevelTransition" parent="." unique_id=23644969 instance=ExtResource("3_8mwx7")]
 position = Vector2(1152, 607)
-size = 19
+size = 37
 location = 1
 targetScene = "uid://bqbg5v8vf8ala"
 
