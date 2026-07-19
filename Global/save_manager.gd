@@ -29,6 +29,7 @@ func create_new_game_save() -> void:
 		"HP" : 20,
 		"Factory" : {},
 		"Blueprints" : {},
+		"Elements" : ["Water", "Fire", "Air", "Earth"],
 		"Discovered Areas" : discoveredAreas,
 		"Persistent Data" : persistentData
 	}
@@ -46,6 +47,7 @@ func save_game() -> void:
 		"HP" : player.health,
 		"Factory" : FactoryGlobal.activePipeLayout,
 		"Blueprints" : FactoryGlobal.blueprintDictionary,
+		"Elements" : FactoryGlobal.elementArray,
 		"Discovered Areas" : discoveredAreas,
 		"Persistent Data" : persistentData
 	}
@@ -63,6 +65,7 @@ func load_game() -> void:
 	
 	FactoryGlobal.activePipeLayout = saveData.get("Factory", {}).duplicate(true)
 	FactoryGlobal.blueprintDictionary = saveData.get("Blueprints", {}).duplicate(true)
+	FactoryGlobal.elementArray = saveData.get("Elements", ["Water", "Fire", "Air", "Earth"]).duplicate()
 	discoveredAreas = saveData.get("Discovered Areas", [])
 	persistentData = saveData.get("Persistent Data", {})
 	

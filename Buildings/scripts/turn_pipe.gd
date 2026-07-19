@@ -11,6 +11,7 @@ const RECIEVES_DOWN := Vector2(0, 1)
 const RECIEVES_LEFT := Vector2(-1, 0)
 
 const TYPE : String = "uid://cqy8ue3p87kvi"
+const BUILDING_INDEX : int = 2
 
 static func get_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:

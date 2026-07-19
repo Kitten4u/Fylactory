@@ -6,6 +6,7 @@ const GIVES_DOWN := Vector2(0, -1)
 const GIVES_LEFT := Vector2(1, 0)
 
 const TYPE : String = "uid://dxqdm37qygx70"
+const BUILDING_INDEX : int = 1
 
 static func get_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:

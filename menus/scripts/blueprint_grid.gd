@@ -9,9 +9,11 @@ func _ready() -> void:
 	
 	# Create the building preview
 	selectedBuilding = FactoryGlobal.selectedBuildingBetweenRooms
-	buildingPreviewInstance = selectedBuilding.instantiate()
-	add_child(buildingPreviewInstance)
-	buildingPreviewInstance.modulate.a = 0.7
+	selectedBuildingIndex = FactoryGlobal.selectedBuildingIndexBetweenRooms
+	if selectedBuilding:
+		buildingPreviewInstance = selectedBuilding.instantiate()
+		add_child(buildingPreviewInstance)
+		buildingPreviewInstance.modulate.a = 0.7
 
 func _unhandled_input(event: InputEvent) -> void:
 	if FactoryGlobal.disableInput == false:
@@ -30,28 +32,29 @@ func _unhandled_input(event: InputEvent) -> void:
 					building.position.x += FactoryGlobal.CELL_SIZE.x
 
 func spawn_building(location : String) -> void:
-	%BuildButton.hide()
-	var trueLocation = str_to_var(location)
-	var currentBuildings = %Buildings.get_children()
-	for building in currentBuildings:
-		if building.position - FactoryGlobal.HALF_CELL_SIZE == trueLocation:
-			if forceBuild == true:
-				delete_building(location)
-			else:
-				return
-	
-	var building = selectedBuilding.instantiate()
-	building.position = trueLocation + FactoryGlobal.HALF_CELL_SIZE
-	if flip == true:
-		building.scale.x = -1
-	building.get_node("Sprite2D").rotate(deg_to_rad(buildingRotation))
-	%Buildings.add_child(building)
-	building.add_to_group("Buildings")
-	
-	# Need to make sure the end point of an underground pipe is placed immediately after the start point
-	if selectedBuilding == FactoryGlobal.undergroundPipeStart or selectedBuilding == FactoryGlobal.undergroundPipeEnd:
-		select_building(0)
-		justBuiltBuildingUnderground = false
+	if selectedBuilding:
+		%BuildButton.hide()
+		var trueLocation = str_to_var(location)
+		var currentBuildings = %Buildings.get_children()
+		for building in currentBuildings:
+			if building.position - FactoryGlobal.HALF_CELL_SIZE == trueLocation:
+				if forceBuild == true:
+					delete_building(location)
+				else:
+					return
+		
+		var building = selectedBuilding.instantiate()
+		building.position = trueLocation + FactoryGlobal.HALF_CELL_SIZE
+		if flip == true:
+			building.scale.x = -1
+		building.get_node("Sprite2D").rotate(deg_to_rad(buildingRotation))
+		%Buildings.add_child(building)
+		building.add_to_group("Buildings")
+		
+		# Need to make sure the end point of an underground pipe is placed immediately after the start point
+		if selectedBuilding == FactoryGlobal.undergroundPipeStart or selectedBuilding == FactoryGlobal.undergroundPipeEnd:
+			select_building(0)
+			justBuiltBuildingUnderground = false
 
 func delete_building(location : String) -> void:
 	for body in %Buildings.get_children():

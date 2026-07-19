@@ -16,6 +16,7 @@ const MERGES_DOWN := Vector2(1, 0)
 const MERGES_LEFT := Vector2(0, 1)
 
 const TYPE : String = "uid://cvfg3ivtnqdxs"
+const BUILDING_INDEX : int = 3
 
 static func get_gives(building_rotation : int, flip : bool) -> Vector2:
 	if building_rotation == 0:

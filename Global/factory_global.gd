@@ -28,6 +28,7 @@ var phylactery = preload("uid://rwrddigeppfh")
 var vaporizer = preload("uid://ct6w6os54d0fy")
 
 # Player Stats
+var elementArray
 var waterAmount : float = 0
 var fireAmount : float = 0
 var airAmount : float = 0
@@ -41,6 +42,7 @@ var selectedBlueprint : Dictionary
 var blueprintChunk : Dictionary
 var disableInput : bool
 var selectedBuildingBetweenRooms
+var selectedBuildingIndexBetweenRooms : int
 
 func _ready() -> void:
 	buildingArray.append(normalPipe)
@@ -52,6 +54,9 @@ func _ready() -> void:
 	buildingArray.append(phylactery)
 	buildingArray.append(vaporizer)
 	
+	if elementArray == null:
+		elementArray = ["Water", "Fire", "Earth", "Air"]
+	
 	if not selectedBuildingBetweenRooms:
 		selectedBuildingBetweenRooms = normalPipe
 	
@@ -61,38 +66,21 @@ func _ready() -> void:
 		await get_tree().process_frame
 		player = get_tree().get_first_node_in_group("Player")
 
-func get_elements_total(elements : Dictionary):
-	print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	print("Elements")
-	print(elements)
-	print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	var currentScene = null
+func get_elements_total():
+	waterAmount = 0
+	fireAmount = 0
+	airAmount = 0
+	earthAmount = 0
 	
-	while not currentScene:
-		await get_tree().process_frame
-		currentScene = get_tree().current_scene
-		
-		if currentScene:
-			for element in elements:
-				if element == "Water":
-					waterAmount = elements[element]
-				elif element == "Fire":
-					fireAmount = elements[element]
-				elif element == "Air":
-					airAmount = elements[element]
-				elif element == "Earth":
-					earthAmount = elements[element]
-			
-			for room in activePhylacteryValues:
-				if room != get_tree().current_scene.name:
-					for element in activePhylacteryValues[room]:
-						if element == "Water":
-							waterAmount += activePhylacteryValues[room][element]
-						elif element == "Fire":
-							fireAmount += activePhylacteryValues[room][element]
-						elif element == "Air":
-							airAmount += activePhylacteryValues[room][element]
-						elif element == "Earth":
-							earthAmount += activePhylacteryValues[room][element]
-			
-			player.update_stats()
+	for room in activePhylacteryValues:
+		for element in activePhylacteryValues[room]:
+			if element == "Water":
+				waterAmount += activePhylacteryValues[room][element]
+			elif element == "Fire":
+				fireAmount += activePhylacteryValues[room][element]
+			elif element == "Air":
+				airAmount += activePhylacteryValues[room][element]
+			elif element == "Earth":
+				earthAmount += activePhylacteryValues[room][element]
+
+	player.update_stats()
