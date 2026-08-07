@@ -4,6 +4,7 @@ class_name PlayerState extends Node
 @onready var run : PlayerStateRun = %Run
 @onready var fall : PlayerStateFall = %Fall
 @onready var jump : PlayerStateJump = %Jump
+@onready var attack : PlayerStateAttack = %Attack
 
 var player : Player
 var nextState : PlayerState

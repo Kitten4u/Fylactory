@@ -36,13 +36,14 @@ var earthAmount : float = 0
 
 var player : Player
 var activePipeLayout : Dictionary
+var activeFlowBetweenRooms : Dictionary
 var activePhylacteryValues : Dictionary
 var blueprintDictionary : Dictionary
 var selectedBlueprint : Dictionary
 var blueprintChunk : Dictionary
-var disableInput : bool
 var selectedBuildingBetweenRooms
 var selectedBuildingIndexBetweenRooms : int
+var isGridOn : bool = true
 
 func _ready() -> void:
 	buildingArray.append(normalPipe)

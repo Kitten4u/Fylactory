@@ -32,6 +32,7 @@ shape = SubResource("RectangleShape2D_y0dcm")
 [node name="Grid" type="Node2D" parent="." unique_id=1858597473]
 unique_name_in_owner = true
 script = ExtResource("3_0bb7k")
+GRID_SIZE = null
 
 [node name="BuildingWheel" parent="Grid" unique_id=1894281909 instance=ExtResource("2_ba24s")]
 offset_left = 119.0
@@ -82,9 +83,7 @@ color = Color(0, 0, 1, 1)
 unique_name_in_owner = true
 
 [node name="ExitToTestingRoom2" parent="Grid/Exits" unique_id=1363911315 instance=ExtResource("4_swpqq")]
-position = Vector2(1100, 250)
-side = 1
-connectingRoom = "TestingRoom2"
+position = Vector2(1120, 250)
 
 [node name="Buildings" type="CanvasGroup" parent="." unique_id=1515048458]
 unique_name_in_owner = true
@@ -125,5 +124,4 @@ offset_left = -124.0
 offset_top = -130.0
 offset_right = 125.0
 offset_bottom = 130.0
-mouse_filter = 2
 color = Color(0, 1, 0, 0.50980395)

@@ -7,6 +7,8 @@ class_name Player extends CharacterBody2D
 @export var fireMultiplier : float = 1
 @export var earthMultiplier : float = 1
 
+@onready var attackArea : AttackArea = %AttackArea
+
 # Player Stats
 var moveSpeed : float 
 var jumpHeight : float 
@@ -29,8 +31,10 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("build_mode"):
 		if $BuildArea.visible == false:
 			$BuildArea.show()
+			FactoryGlobal.isGridOn = true
 		else:
 			$BuildArea.hide()
+			FactoryGlobal.isGridOn = false
 	update_direction()
 	change_states(currentState.process(delta))
 
@@ -68,8 +72,13 @@ func change_states(newState: PlayerState) -> void:
 	$Label.text = currentState.name
 
 func update_direction() -> void:
+	var previousDirection = direction
 	var xDirection = Input.get_axis("Left", "Right")
 	direction = Vector2(xDirection, 0)
+	
+	if previousDirection.x != direction.x:
+		%AttackArea.flip(direction.x)
+	
 
 func update_stats() -> void:
 	moveSpeed = FactoryGlobal.waterAmount
@@ -78,3 +87,5 @@ func update_stats() -> void:
 	attack = FactoryGlobal.fireAmount
 	if moveSpeed <= 0:
 		moveSpeed = 500
+	#if jumpHeight <= 0:
+		#jumpHeight = 500

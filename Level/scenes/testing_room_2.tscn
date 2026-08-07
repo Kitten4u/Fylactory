@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://buildings/scripts/grid.gd" id="1_04203"]
 [ext_resource type="PackedScene" uid="uid://d1hih5du731ut" path="res://buildings/source.tscn" id="2_cpv4j"]
 [ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://level/scenes/player_spawn.tscn" id="3_nd6x2"]
+[ext_resource type="PackedScene" uid="uid://xckph8p3q33j" path="res://buildings/pipe_exit.tscn" id="4_cuyyl"]
 [ext_resource type="PackedScene" uid="uid://b13tqsemuydqa" path="res://level/scenes/level_transition.tscn" id="4_lmlh5"]
 [ext_resource type="Script" uid="uid://2nbqb7161hkw" path="res://level/scripts/level_bounds.gd" id="5_lvsff"]
 [ext_resource type="PackedScene" uid="uid://cj8qd2tgxkfr3" path="res://buildings/building_wheel.tscn" id="6_7i1jp"]
@@ -74,6 +75,13 @@ offset_top = -18.0
 offset_right = 18.0
 offset_bottom = 17.0
 color = Color(0.31764707, 0.2, 0.06666667, 1)
+
+[node name="Exits" type="Node2D" parent="Grid" unique_id=201542995]
+unique_name_in_owner = true
+
+[node name="ExitToTestingRoom1" parent="Grid/Exits" unique_id=1363911315 instance=ExtResource("4_cuyyl")]
+position = Vector2(0, 250)
+connectingRoom = "Testing Room"
 
 [node name="Buildings" type="CanvasGroup" parent="." unique_id=467734109]
 unique_name_in_owner = true

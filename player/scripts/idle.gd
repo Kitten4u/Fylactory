@@ -20,6 +20,8 @@ func exit() -> void:
 	pass
 
 func handle_input(event) -> PlayerState:
+	if event.is_action_pressed("attack_build") and FactoryGlobal.isGridOn == false:
+		return attack
 	if event.is_action_pressed("Jump"):
 		return jump
 	

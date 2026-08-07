@@ -19,5 +19,7 @@ func physics_process(_delta: float) -> PlayerState:
 func exit() -> void:
 	pass
 
-func handle_input(_event) -> PlayerState:
+func handle_input(event) -> PlayerState:
+	if event.is_action_pressed("attack_build") and FactoryGlobal.isGridOn == false:
+		return attack
 	return
