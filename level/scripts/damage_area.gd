@@ -4,7 +4,7 @@ signal damageTaken(attackArea)
 
 func take_damage(attackArea : AttackArea) -> void:
 	print("Ouch")
-	damageTaken.emit(attackArea)
+	damageTaken.emit(attackArea.damage)
 
 func make_invulnerable(duration : float = 1.0) -> void:
 	process_mode = Node.PROCESS_MODE_DISABLED

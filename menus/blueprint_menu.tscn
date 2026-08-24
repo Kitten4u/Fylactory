@@ -183,6 +183,7 @@ text = "Enter Blueprint Name"
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "Enter Name"
+max_length = 25
 emoji_menu_enabled = false
 
 [node name="HBoxContainer" type="HBoxContainer" parent="EnterBlueprintName/ColorRect/VBoxContainer" unique_id=1851189770]

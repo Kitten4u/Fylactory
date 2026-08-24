@@ -1,0 +1,120 @@
+[gd_scene format=3 uid="uid://dj4wuecumrhhk"]
+
+[ext_resource type="Script" uid="uid://cpkgdoq4dlcc3" path="res://buildings/scripts/grid.gd" id="1_tc5gy"]
+[ext_resource type="PackedScene" uid="uid://cj8qd2tgxkfr3" path="res://buildings/building_wheel.tscn" id="2_l28qg"]
+[ext_resource type="Script" uid="uid://b7sf0uqi84ekk" path="res://buildings/scripts/source.gd" id="3_e7lga"]
+[ext_resource type="PackedScene" uid="uid://xckph8p3q33j" path="res://buildings/pipe_exit.tscn" id="4_e7lga"]
+[ext_resource type="PackedScene" uid="uid://b13tqsemuydqa" path="res://level/scenes/level_transition.tscn" id="4_l28qg"]
+[ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://level/scenes/player_spawn.tscn" id="4_mlhri"]
+[ext_resource type="Script" uid="uid://2nbqb7161hkw" path="res://level/scripts/level_bounds.gd" id="5_fm04e"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1jqpt"]
+size = Vector2(1154, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_dmkdp"]
+size = Vector2(39, 39)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_r6pw3"]
+size = Vector2(32, 33)
+
+[node name="TestingRoom3" type="Node2D" unique_id=1390110024]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1093264207]
+position = Vector2(0, 607)
+
+[node name="ColorRect" type="ColorRect" parent="StaticBody2D" unique_id=1844017766]
+offset_right = 1154.0
+offset_bottom = 40.0
+color = Color(0, 0, 0, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=787078884]
+position = Vector2(577, 20)
+shape = SubResource("RectangleShape2D_1jqpt")
+
+[node name="Grid" type="Node2D" parent="." unique_id=1966897463]
+unique_name_in_owner = true
+script = ExtResource("1_tc5gy")
+
+[node name="BuildingWheel" parent="Grid" unique_id=1894281909 instance=ExtResource("2_l28qg")]
+offset_left = 119.0
+offset_top = 53.0
+offset_right = 119.0
+offset_bottom = 53.0
+
+[node name="Sources" type="Node2D" parent="Grid" unique_id=326897880]
+unique_name_in_owner = true
+
+[node name="Source" type="Area2D" parent="Grid/Sources" unique_id=1851620759]
+position = Vector2(117, 117)
+script = ExtResource("3_e7lga")
+type = Array[String](["Water"])
+amount = Array[float]([300.0])
+metadata/_custom_type_script = "uid://b7sf0uqi84ekk"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Grid/Sources/Source" unique_id=400010439]
+position = Vector2(9.5, 9.5)
+shape = SubResource("RectangleShape2D_dmkdp")
+
+[node name="ColorRect" type="ColorRect" parent="Grid/Sources/Source" unique_id=456023399]
+offset_left = -9.0
+offset_top = -9.0
+offset_right = 28.0
+offset_bottom = 28.0
+color = Color(0, 0, 1, 1)
+
+[node name="Source2" type="Area2D" parent="Grid/Sources" unique_id=751012492]
+position = Vector2(765, 64)
+script = ExtResource("3_e7lga")
+type = Array[String](["Air"])
+amount = Array[float]([100.0])
+metadata/_custom_type_script = "uid://b7sf0uqi84ekk"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Grid/Sources/Source2" unique_id=349475861]
+position = Vector2(8, 8.5)
+shape = SubResource("RectangleShape2D_r6pw3")
+
+[node name="ColorRect" type="ColorRect" parent="Grid/Sources/Source2" unique_id=1849085986]
+offset_left = -9.0
+offset_top = -9.0
+offset_right = 25.0
+offset_bottom = 26.0
+color = Color(0, 1, 0, 1)
+
+[node name="Exits" type="Node2D" parent="Grid" unique_id=1655261740]
+unique_name_in_owner = true
+
+[node name="ExitToTestingRoom" parent="Grid/Exits" unique_id=1363911315 instance=ExtResource("4_e7lga")]
+position = Vector2(200, 0)
+side = 2
+connectingRoom = "Testing Room"
+
+[node name="Buildings" type="CanvasGroup" parent="." unique_id=239685940]
+unique_name_in_owner = true
+
+[node name="LevelTransitionToTestingRoom" parent="." unique_id=23644969 instance=ExtResource("4_l28qg")]
+position = Vector2(1152, 608)
+size = 26
+location = 1
+targetScene = "uid://dpxba218vm1lf"
+targetAreaName = "LevelTransitionToTestingRoom3"
+
+[node name="LevelTransitionToTestingRoom2" parent="." unique_id=644237715 instance=ExtResource("4_l28qg")]
+position = Vector2(0, 607)
+size = 32
+targetScene = "uid://bqbg5v8vf8ala"
+targetAreaName = "LevelTransitionToTestingRoom3"
+
+[node name="PlayerSpawn" parent="." unique_id=151070151 instance=ExtResource("4_mlhri")]
+position = Vector2(587, 603)
+
+[node name="LevelBounds" type="Node2D" parent="." unique_id=1465892292]
+z_index = 256
+script = ExtResource("5_fm04e")
+width = 1152
+height = 654
+metadata/_custom_type_script = "uid://2nbqb7161hkw"
+
+[node name="ClickTimer" type="Timer" parent="." unique_id=1812917791]
+unique_name_in_owner = true
+wait_time = 0.15
+one_shot = true

@@ -13,7 +13,7 @@ const GRID_REPLACE_COLOR : String = "Purple"
 const GRID_SELECTION_OUTLINE_COLOR : String = "Black"
 const GRID_BOX_OUTLLINE_THICKNESS : float = 5.0
 const factoryOpacity : float = .75
-const buildAreaRadius : float = 280.0
+const buildAreaRadius : float = 285.0
 
 # Buildings
 var buildingArray = []
@@ -43,7 +43,10 @@ var selectedBlueprint : Dictionary
 var blueprintChunk : Dictionary
 var selectedBuildingBetweenRooms
 var selectedBuildingIndexBetweenRooms : int
+var rotationBetweenRooms : int
+var flipBetweenRooms : bool
 var isGridOn : bool = true
+var disableInput : bool = false
 
 func _ready() -> void:
 	buildingArray.append(normalPipe)

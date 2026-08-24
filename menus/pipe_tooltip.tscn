@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cg3powp8taytw"]
 
-[ext_resource type="Script" uid="uid://b27afhlvrebuv" path="res://buildings/scripts/pipe_tooltip.gd" id="1_au1nt"]
+[ext_resource type="Script" uid="uid://b27afhlvrebuv" path="res://menus/scripts/pipe_tooltip.gd" id="1_au1nt"]
 
 [node name="PipeTooltip" type="Control" unique_id=121498875]
 layout_mode = 3

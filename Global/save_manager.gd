@@ -28,6 +28,8 @@ func create_new_game_save() -> void:
 		"Y" : 603.0,
 		"HP" : 20,
 		"Factory" : {},
+		"Factory Stats" : {},
+		"Flow Between Rooms" : {},
 		"Blueprints" : {},
 		"Elements" : ["Water", "Fire", "Air", "Earth"],
 		"Discovered Areas" : discoveredAreas,
@@ -46,6 +48,8 @@ func save_game() -> void:
 		"Y" : player.global_position.y,
 		"HP" : player.health,
 		"Factory" : FactoryGlobal.activePipeLayout,
+		"Factory Stats" : FactoryGlobal.activePhylacteryValues,
+		"Flow Between Rooms" : FactoryGlobal.activeFlowBetweenRooms,
 		"Blueprints" : FactoryGlobal.blueprintDictionary,
 		"Elements" : FactoryGlobal.elementArray,
 		"Discovered Areas" : discoveredAreas,
@@ -64,6 +68,8 @@ func load_game() -> void:
 	var scenePath = saveData.get("Scene", "uid://dpxba218vm1lf")
 	
 	FactoryGlobal.activePipeLayout = saveData.get("Factory", {}).duplicate(true)
+	FactoryGlobal.activePhylacteryValues = saveData.get("Factory Stats", {}).duplicate(true)
+	FactoryGlobal.activeFlowBetweenRooms = saveData.get("Flow Between Rooms", {}).duplicate(true)
 	FactoryGlobal.blueprintDictionary = saveData.get("Blueprints", {}).duplicate(true)
 	FactoryGlobal.elementArray = saveData.get("Elements", ["Water", "Fire", "Air", "Earth"]).duplicate()
 	discoveredAreas = saveData.get("Discovered Areas", [])

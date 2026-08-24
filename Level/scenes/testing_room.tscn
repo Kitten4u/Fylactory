@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://xckph8p3q33j" path="res://buildings/pipe_exit.tscn" id="4_swpqq"]
 [ext_resource type="PackedScene" uid="uid://bureh7vratkm6" path="res://level/scenes/player_spawn.tscn" id="4_yv6bu"]
 [ext_resource type="Script" uid="uid://crjkp64ahghjb" path="res://level/scripts/damage_area.gd" id="8_f1tkq"]
+[ext_resource type="PackedScene" uid="uid://7f3gfxweodh5" path="res://enemies/generic_enemy.tscn" id="9_500wl"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_y0dcm"]
 size = Vector2(1154, 40)
@@ -86,14 +87,25 @@ position = Vector2(1100, 250)
 side = 1
 connectingRoom = "TestingRoom2"
 
+[node name="ExitToTestingRoom3" parent="Grid/Exits" unique_id=652199556 instance=ExtResource("4_swpqq")]
+position = Vector2(200, 600)
+side = 3
+connectingRoom = "TestingRoom3"
+
 [node name="Buildings" type="CanvasGroup" parent="." unique_id=1515048458]
 unique_name_in_owner = true
 
-[node name="LevelTransition" parent="." unique_id=23644969 instance=ExtResource("3_8mwx7")]
+[node name="LevelTransitionToTestingRoom2" parent="." unique_id=23644969 instance=ExtResource("3_8mwx7")]
 position = Vector2(1152, 607)
 size = 37
 location = 1
 targetScene = "uid://bqbg5v8vf8ala"
+targetAreaName = "LevelTransitionToTestingRoom"
+
+[node name="LevelTransitionToTestingRoom3" parent="." unique_id=924515554 instance=ExtResource("3_8mwx7")]
+position = Vector2(0, 606)
+size = 26
+targetScene = "uid://dj4wuecumrhhk"
 
 [node name="PlayerSpawn" parent="." unique_id=151070151 instance=ExtResource("4_yv6bu")]
 position = Vector2(587, 603)
@@ -127,3 +139,6 @@ offset_right = 125.0
 offset_bottom = 130.0
 mouse_filter = 2
 color = Color(0, 1, 0, 0.50980395)
+
+[node name="GenericEnemy" parent="." unique_id=1318681962 instance=ExtResource("9_500wl")]
+position = Vector2(915, 325)

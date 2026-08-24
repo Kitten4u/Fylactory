@@ -89,10 +89,18 @@ unique_name_in_owner = true
 [node name="PlayerSpawn" parent="." unique_id=151070151 instance=ExtResource("3_nd6x2")]
 position = Vector2(568, 607)
 
-[node name="LevelTransition" parent="." unique_id=23644969 instance=ExtResource("4_lmlh5")]
+[node name="LevelTransitionToTestingRoom" parent="." unique_id=23644969 instance=ExtResource("4_lmlh5")]
 position = Vector2(0, 612)
 size = 37
 targetScene = "uid://dpxba218vm1lf"
+targetAreaName = "LevelTransitionToTestingRoom2"
+
+[node name="LevelTransitionToTestingRoom3" parent="." unique_id=2104957743 instance=ExtResource("4_lmlh5")]
+position = Vector2(1153, 612)
+size = 36
+location = 1
+targetScene = "uid://dj4wuecumrhhk"
+targetAreaName = "LevelTransitionToTestingRoom2"
 
 [node name="LevelBounds" type="Node2D" parent="." unique_id=2127037589]
 z_index = 256
