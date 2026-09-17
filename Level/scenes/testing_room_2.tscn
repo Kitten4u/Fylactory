@@ -83,6 +83,11 @@ unique_name_in_owner = true
 position = Vector2(0, 250)
 connectingRoom = "Testing Room"
 
+[node name="ExitToTestingRoom3" parent="Grid/Exits" unique_id=645939723 instance=ExtResource("4_cuyyl")]
+position = Vector2(900, 610)
+side = 3
+connectingRoom = "TestingRoom3"
+
 [node name="Buildings" type="CanvasGroup" parent="." unique_id=467734109]
 unique_name_in_owner = true
 
@@ -90,13 +95,13 @@ unique_name_in_owner = true
 position = Vector2(568, 607)
 
 [node name="LevelTransitionToTestingRoom" parent="." unique_id=23644969 instance=ExtResource("4_lmlh5")]
-position = Vector2(0, 612)
+position = Vector2(-2, 612)
 size = 37
 targetScene = "uid://dpxba218vm1lf"
 targetAreaName = "LevelTransitionToTestingRoom2"
 
 [node name="LevelTransitionToTestingRoom3" parent="." unique_id=2104957743 instance=ExtResource("4_lmlh5")]
-position = Vector2(1153, 612)
+position = Vector2(1154, 612)
 size = 36
 location = 1
 targetScene = "uid://dj4wuecumrhhk"

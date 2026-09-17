@@ -6,7 +6,6 @@ enum DIRECTION {INSIDE, OUTSIDE}
 @export var side : SIDE = SIDE.LEFT
 @export var connectingRoom : String
 var flowDirection : DIRECTION
-var elementArray : Dictionary[String, float]
 
 func get_side() -> String:
 	return SIDE.keys()[side]

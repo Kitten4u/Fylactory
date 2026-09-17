@@ -88,18 +88,23 @@ position = Vector2(200, 0)
 side = 2
 connectingRoom = "Testing Room"
 
+[node name="ExitToTestingRoom2" parent="Grid/Exits" unique_id=573887976 instance=ExtResource("4_e7lga")]
+position = Vector2(1100, 100)
+side = 1
+connectingRoom = "TestingRoom2"
+
 [node name="Buildings" type="CanvasGroup" parent="." unique_id=239685940]
 unique_name_in_owner = true
 
 [node name="LevelTransitionToTestingRoom" parent="." unique_id=23644969 instance=ExtResource("4_l28qg")]
-position = Vector2(1152, 608)
+position = Vector2(1154, 608)
 size = 26
 location = 1
 targetScene = "uid://dpxba218vm1lf"
 targetAreaName = "LevelTransitionToTestingRoom3"
 
 [node name="LevelTransitionToTestingRoom2" parent="." unique_id=644237715 instance=ExtResource("4_l28qg")]
-position = Vector2(0, 607)
+position = Vector2(-2, 607)
 size = 32
 targetScene = "uid://bqbg5v8vf8ala"
 targetAreaName = "LevelTransitionToTestingRoom3"

@@ -96,16 +96,17 @@ connectingRoom = "TestingRoom3"
 unique_name_in_owner = true
 
 [node name="LevelTransitionToTestingRoom2" parent="." unique_id=23644969 instance=ExtResource("3_8mwx7")]
-position = Vector2(1152, 607)
+position = Vector2(1154, 607)
 size = 37
 location = 1
 targetScene = "uid://bqbg5v8vf8ala"
 targetAreaName = "LevelTransitionToTestingRoom"
 
 [node name="LevelTransitionToTestingRoom3" parent="." unique_id=924515554 instance=ExtResource("3_8mwx7")]
-position = Vector2(0, 606)
+position = Vector2(-2, 606)
 size = 26
 targetScene = "uid://dj4wuecumrhhk"
+targetAreaName = "LevelTransitionToTestingRoom"
 
 [node name="PlayerSpawn" parent="." unique_id=151070151 instance=ExtResource("4_yv6bu")]
 position = Vector2(587, 603)
@@ -141,4 +142,4 @@ mouse_filter = 2
 color = Color(0, 1, 0, 0.50980395)
 
 [node name="GenericEnemy" parent="." unique_id=1318681962 instance=ExtResource("9_500wl")]
-position = Vector2(915, 325)
+position = Vector2(936, 224)

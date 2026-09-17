@@ -87,8 +87,13 @@ func update_stats() -> void:
 	attack = FactoryGlobal.fireAmount
 	if moveSpeed <= 0:
 		moveSpeed = 500
-	if jumpHeight <= 0:
-		jumpHeight = 1000
-	if attack <= 0:
-		attack = 1
+	#if jumpHeight <= 0:
+		#jumpHeight = 1000
+	#if attack <= 0:
+		#attack = 1
 	attackArea.damage = attack
+	print("New Player Stats")
+	print("Water: " + str(moveSpeed))
+	print("Fire: " + str(attack))
+	print("Earth: " + str(health))
+	print("Air: " + str(jumpHeight))
