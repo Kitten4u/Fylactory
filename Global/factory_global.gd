@@ -10,6 +10,7 @@ const GRID_ERROR_COLOR : String = "Red"
 const GRID_OUTSIDE_BUILD_AREA_COLOR : String = "Cyan"
 const GRID_TRANSFORM_COLOR : String = "Blue"
 const GRID_REPLACE_COLOR : String = "Purple"
+const GRID_ANCHOR_COLOR : String = "Yellow"
 const GRID_SELECTION_OUTLINE_COLOR : String = "Black"
 const GRID_BOX_OUTLLINE_THICKNESS : float = 5.0
 const factoryOpacity : float = .75

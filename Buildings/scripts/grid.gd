@@ -21,6 +21,8 @@ var pipeInfo : Dictionary
 var buildingRotation : int = 0
 var flip : bool = false
 var phylacteryLocations : Dictionary[String, String] = {}
+var flowMarginOfError : float = 0.6
+var foundPipeLoop : bool = false
 #endregion
 
 #region Preview for Pipe Dragging Path
@@ -38,8 +40,11 @@ var previewEnd := Vector2.INF
 var reversePath : bool = false
 var transformPipe : bool = false
 var playerLocation : Vector2
+var draggedPathPipes : Array[Vector2] = []
 var overlappingPipes : Array[Vector2] = []
 var outsideBuildAreaPipes : Array[Vector2] = []
+var anchorPointsDictionary : Dictionary[Vector2, Vector2] = {}
+var anchorPointsArray : Array[Vector2]
 #endregion
 
 #region For Selecting Pipes
@@ -173,7 +178,30 @@ func _process(_delta: float) -> void:
 		or currentDragLocation.distance_to(currentCursorLocation) >= FactoryGlobal.CELL_SIZE.y)) \
 		or (playerLocation != FactoryGlobal.player.position):
 			currentDragLocation = currentCursorLocation
-			handle_pipe_dragging()
+			draggedPathPipes.clear()
+			overlappingPipes.clear()
+			outsideBuildAreaPipes.clear()
+			create_preview_path()
+			if currentPreview != Vector2.INF:
+				if anchorPointsDictionary != {} and anchorPointsArray != []:
+					var startPoint : Vector2
+					var endPoint : Vector2
+					var pipeDirection : Vector2
+					var previousAnchor : Vector2
+					for point in anchorPointsArray:
+						endPoint = point
+						pipeDirection = anchorPointsDictionary[point]
+						if point == anchorPointsArray[0]:
+							startPoint = previewStart
+						else:
+							startPoint = previousAnchor
+						handle_pipe_dragging(startPoint, endPoint, pipeDirection)
+						previousAnchor = point
+					
+					handle_pipe_dragging(previousAnchor, currentPreview, previewDirection)
+				else:
+					handle_pipe_dragging(previewStart, currentPreview, previewDirection)
+				check_existing_buildings_for_pipe_drag()
 	#endregion
 	
 	#region Selections
@@ -316,6 +344,8 @@ func _input(event: InputEvent) -> void:
 						if selectedBuildingIndex != -1:
 							previewStart = cursor_snap()
 							pipeDragging = true
+							anchorPointsArray.clear()
+							anchorPointsDictionary = {}
 							preDragBuilding = selectedBuilding
 							preDragBuildingIndex = selectedBuildingIndex
 							preDragBuildingFlip = flip
@@ -327,6 +357,12 @@ func _input(event: InputEvent) -> void:
 							selectionDragging = true
 							selectionDragStart = get_local_mouse_position()
 							selectionDragStartSnapped = cursor_snap()
+				elif event.is_action_released("create_anchor") and pipeDragging == true:
+					if cursor_snap() != previewStart and anchorPointsArray.has(cursor_snap()) == false:
+						anchorPointsDictionary[cursor_snap()] = previewDirection
+						anchorPointsArray.append(cursor_snap())
+						previewDirection = Vector2.INF
+						currentPreview = Vector2.INF
 				#endregion
 				
 				#region Open Blueprint
@@ -440,30 +476,36 @@ func _draw() -> void:
 	
 	#region Drawing pipe dragging
 	elif pipeDragging == true:
-		draw_rect(create_preview_path_start(), FactoryGlobal.GRID_GOOD_COLOR)
-		draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
-		draw_rect(create_preview_path_end(), FactoryGlobal.GRID_GOOD_COLOR)
-		draw_rect(Rect2(currentPreview, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
-		if abs(previewDirection.x) > abs(previewDirection.y):
-			draw_rect(Rect2(currentPreview.x, previewStart.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_GOOD_COLOR)
-		else:
-			draw_rect(Rect2(previewStart.x, currentPreview.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_GOOD_COLOR)
-		
+		if draggedPathPipes != []:
+			for index in draggedPathPipes.size():
+				draw_rect(Rect2(draggedPathPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
+		#draw_rect(create_preview_path_start(), FactoryGlobal.GRID_GOOD_COLOR)
+		#draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
+		#draw_rect(create_preview_path_end(), FactoryGlobal.GRID_GOOD_COLOR)
+		#draw_rect(Rect2(currentPreview, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_GOOD_COLOR)
+		#if abs(previewDirection.x) > abs(previewDirection.y):
+			#draw_rect(Rect2(currentPreview.x, previewStart.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_GOOD_COLOR)
+		#else:
+			#draw_rect(Rect2(previewStart.x, currentPreview.y, FactoryGlobal.CELL_SIZE.x, FactoryGlobal.CELL_SIZE.y), FactoryGlobal.GRID_GOOD_COLOR)
+		var parent = get_tree().root
+		var blueprintMenu = parent.get_node_or_null("BlueprintMenu")
+		if outsideBuildAreaPipes != [] and not blueprintMenu:
+			for index in outsideBuildAreaPipes.size():
+				draw_rect(Rect2(outsideBuildAreaPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_OUTSIDE_BUILD_AREA_COLOR)
+				
 		if overlappingPipes != []:
 			for index in overlappingPipes.size():
 				if forceBuild == false:
 					draw_rect(Rect2(overlappingPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_ERROR_COLOR)
 				else:
 					draw_rect(Rect2(overlappingPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_REPLACE_COLOR)
-		
-		var parent = get_tree().root
-		var blueprintMenu = parent.get_node_or_null("BlueprintMenu")
-		if outsideBuildAreaPipes != [] and not blueprintMenu:
-			for index in outsideBuildAreaPipes.size():
-				draw_rect(Rect2(outsideBuildAreaPipes[index], FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_OUTSIDE_BUILD_AREA_COLOR)
-		
+
 		if transformPipe == true:
 			draw_rect(Rect2(previewStart, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_TRANSFORM_COLOR)
+		
+		if anchorPointsDictionary != {}:
+			for point in anchorPointsDictionary:
+				draw_rect(Rect2(point, FactoryGlobal.CELL_SIZE), FactoryGlobal.GRID_ANCHOR_COLOR)
 	#endregion
 	
 	#region Selection
@@ -542,71 +584,134 @@ func get_blueprint_area(positions : Array[Vector2]) -> Dictionary[String, float]
 #endregion
 
 #region Create groups of pipes functionality
-func handle_pipe_dragging() -> void:
-	overlappingPipes.clear()
-	outsideBuildAreaPipes.clear()
+func get_end_chain_start() -> Vector2:
+	if anchorPointsArray == []:
+		return previewStart
+	else:
+		return anchorPointsArray[-1]
+
+#func handle_anchor_points() -> void:
+	#var previousAnchorPoint : Vector2
+	#var coordCheck : Vector2
+	#var previewPlace : float
+	#var previewChange : float
+	#var pointCheck : float
+	#var farthestPoint : float
+	#
+	#for point in anchorPoints:
+		#draggedPathPipes.append(point)
+		#if point == anchorPoints[0]:
+			#coordCheck = previewStart
+			#if point.x != previewStart.x:
+				#pointCheck = previewStart.x
+				#farthestPoint = point.x
+				#if point.x > previewStart.x:
+					#previewChange = FactoryGlobal.CELL_SIZE.x
+				#else: 
+					#previewChange = -FactoryGlobal.CELL_SIZE.x
+			#else:
+				#pointCheck = previewStart.y
+				#farthestPoint = point.y
+				#if point.y > previewStart.y:
+					#previewChange = FactoryGlobal.CELL_SIZE.y
+				#else: 
+					#previewChange = -FactoryGlobal.CELL_SIZE.y
+			#
+			#previewPlace = previewChange
+		#
+		#else:
+			#coordCheck = previousAnchorPoint
+			#if point.x != previousAnchorPoint.x:
+				#pointCheck = previousAnchorPoint.x
+				#farthestPoint = point.x
+				#if point.x > previousAnchorPoint.x:
+					#previewChange = FactoryGlobal.CELL_SIZE.x
+				#else: 
+					#previewChange = -FactoryGlobal.CELL_SIZE.x
+			#else:
+				#pointCheck = previousAnchorPoint.y
+				#farthestPoint = point.y
+				#if point.y > previousAnchorPoint.y:
+					#previewChange = FactoryGlobal.CELL_SIZE.y
+				#else: 
+					#previewChange = -FactoryGlobal.CELL_SIZE.y
+			#
+			#previewPlace = previewChange
+		#
+		#while pointCheck != farthestPoint:
+			#if previousAnchorPoint.x != point.x:
+				#coordCheck = Vector2(previousAnchorPoint.x + previewPlace, previousAnchorPoint.y)
+			#else: 
+				#coordCheck = Vector2(previousAnchorPoint.x, previousAnchorPoint.y + previewPlace)
+			#
+			#draggedPathPipes.append(coordCheck)
+			#if is_inside_build_area(coordCheck) == false:
+				#outsideBuildAreaPipes.append(coordCheck)
+			#
+			#previewPlace += previewChange
+			#pointCheck += previewChange
+		#
+		#previousAnchorPoint = point
+
+func handle_pipe_dragging(startPoint : Vector2, endPoint : Vector2, direction : Vector2) -> void:
 	if buildingPreviewInstance:
 		buildingPreviewInstance.queue_free()
-	create_preview_path()
 	
-	if currentPreview != Vector2.INF and previewStart != Vector2.INF:
+	if startPoint != endPoint:
+		draggedPathPipes.append(startPoint)
 		transformPipe = false
 		
-		var rectStart := Rect2(create_preview_path_start()).abs()
-		var rectEnd := Rect2(create_preview_path_end()).abs()
-		var pipeFacing : Vector2
-		var pipeCorner : Vector2
-		
-		var coordCheck := previewStart
+		var coordCheck := startPoint
 		var previewPlace : float
 		var previewChange : float
 		var pointCheck : float
 		var farthestPoint : float
 		
-		if abs(previewDirection.x) > abs(previewDirection.y):
-			pointCheck = previewStart.x
-			farthestPoint = currentPreview.x
-			if currentPreview.x > previewStart.x:
+		if abs(direction.x) > abs(direction.y):
+			pointCheck = startPoint.x
+			farthestPoint = endPoint.x
+			if endPoint.x > startPoint.x:
 				previewChange = FactoryGlobal.CELL_SIZE.x
 			else:
 				previewChange = -FactoryGlobal.CELL_SIZE.x
 			
 		else:
-			pointCheck = previewStart.y
-			farthestPoint = currentPreview.y
-			if currentPreview.y > previewStart.y:
+			pointCheck = startPoint.y
+			farthestPoint = endPoint.y
+			if endPoint.y > startPoint.y:
 				previewChange = FactoryGlobal.CELL_SIZE.y
 			else:
 				previewChange = -FactoryGlobal.CELL_SIZE.y
 			
 		previewPlace = previewChange
-		if is_inside_build_area(previewStart) == false:
-			outsideBuildAreaPipes.append(previewStart)
+		if is_inside_build_area(startPoint) == false:
+			outsideBuildAreaPipes.append(startPoint)
 		
 		while pointCheck != farthestPoint:
-			if abs(previewDirection.x) > abs(previewDirection.y):
-				coordCheck = Vector2(previewStart.x + previewPlace, previewStart.y)
+			if abs(direction.x) > abs(direction.y):
+				coordCheck = Vector2(startPoint.x + previewPlace, startPoint.y)
 			else: 
-				coordCheck = Vector2(previewStart.x, previewStart.y + previewPlace)
+				coordCheck = Vector2(startPoint.x, startPoint.y + previewPlace)
 			
+			draggedPathPipes.append(coordCheck)
 			if is_inside_build_area(coordCheck) == false:
 				outsideBuildAreaPipes.append(coordCheck)
 			
 			previewPlace += previewChange
 			pointCheck += previewChange
 		
-		if abs(previewDirection.x) > abs(previewDirection.y):
-			pointCheck = previewStart.y
-			farthestPoint = currentPreview.y
-			if currentPreview.y > previewStart.y:
+		if abs(direction.x) > abs(direction.y):
+			pointCheck = startPoint.y
+			farthestPoint = endPoint.y
+			if endPoint.y > startPoint.y:
 				previewChange = FactoryGlobal.CELL_SIZE.y
 			else:
 				previewChange = -FactoryGlobal.CELL_SIZE.y
 			
 		else:
-			pointCheck = previewStart.x
-			farthestPoint = currentPreview.x
-			if currentPreview.x > previewStart.x:
+			pointCheck = startPoint.x
+			farthestPoint = endPoint.x
+			if endPoint.x > startPoint.x:
 				previewChange = FactoryGlobal.CELL_SIZE.x
 			else:
 				previewChange = -FactoryGlobal.CELL_SIZE.x
@@ -614,49 +719,47 @@ func handle_pipe_dragging() -> void:
 		previewPlace = previewChange
 		
 		while pointCheck != farthestPoint:
-			if abs(previewDirection.x) > abs(previewDirection.y):
-				coordCheck = Vector2(currentPreview.x, previewStart.y + previewPlace)
+			if abs(direction.x) > abs(direction.y):
+				coordCheck = Vector2(endPoint.x, startPoint.y + previewPlace)
 			else: 
-				coordCheck = Vector2(previewStart.x + previewPlace, currentPreview.y)
+				coordCheck = Vector2(startPoint.x + previewPlace, endPoint.y)
 			
+			draggedPathPipes.append(coordCheck)
 			if is_inside_build_area(coordCheck) == false:
 				outsideBuildAreaPipes.append(coordCheck)
 				
 			previewPlace += previewChange
 			pointCheck += previewChange
-		
-		if abs(previewDirection.x) > abs(previewDirection.y):
-			pipeFacing = previewStart.direction_to(Vector2(currentPreview.x, previewStart.y))
-			pipeCorner = Vector2(currentPreview.x, previewStart.y)
-		else: 
-			pipeFacing = previewStart.direction_to(Vector2(previewStart.x, currentPreview.y))
-			pipeCorner = Vector2(previewStart.x, currentPreview.y)
-		
-		for pipe in %Buildings.get_children():
-			var previewPipeRotation = rad_to_deg(pipe.get_node("Sprite2D").rotation)
-			var previewPipeFlip = get_building_flip(pipe)
+
+func check_existing_buildings_for_pipe_drag() -> void:
+	var pipeFacing : Vector2
+	
+	if abs(previewDirection.x) > abs(previewDirection.y):
+		pipeFacing = previewStart.direction_to(Vector2(currentPreview.x, previewStart.y))
+	else: 
+		pipeFacing = previewStart.direction_to(Vector2(previewStart.x, currentPreview.y))
 			
-			if pipe.position - FactoryGlobal.HALF_CELL_SIZE == previewStart and previewStart != currentPreview:
-				if pipe.TYPE == TurnPipe.TYPE \
-				and pipe.get_gives(previewPipeRotation, previewPipeFlip) * -1 == pipeFacing:
+	for pipe in %Buildings.get_children():
+		var previewPipeRotation = rad_to_deg(pipe.get_node("Sprite2D").rotation)
+		var previewPipeFlip = get_building_flip(pipe)
+		
+		if pipe.position - FactoryGlobal.HALF_CELL_SIZE == previewStart and previewStart != currentPreview:
+			if pipe.TYPE == TurnPipe.TYPE \
+			and pipe.get_gives(previewPipeRotation, previewPipeFlip) * -1 == pipeFacing:
+				transformPipe = true
+			
+			if pipe.has_method("get_recieves"):
+				if pipe.get_recieves(previewPipeRotation, previewPipeFlip) == pipeFacing:
 					transformPipe = true
-				
-				if pipe.has_method("get_recieves"):
-					if pipe.get_recieves(previewPipeRotation, previewPipeFlip) == pipeFacing:
-						transformPipe = true
-						reversePath = true
-				
-				if pipe.has_method("get_merge_pipe_merges"):
-					if pipe.get_merge_pipe_merges(previewPipeRotation, previewPipeFlip) == pipeFacing:
-						transformPipe = true
-						reversePath = true
+					reversePath = true
 			
-			if rectStart.has_point(pipe.position) \
-			or rectEnd.has_point(pipe.position) \
-			or currentPreview == pipe.position - FactoryGlobal.HALF_CELL_SIZE \
-			or (previewStart == pipe.position - FactoryGlobal.HALF_CELL_SIZE and transformPipe == false) \
-			or pipeCorner == pipe.position - FactoryGlobal.HALF_CELL_SIZE:
-				overlappingPipes.append(pipe.position - FactoryGlobal.HALF_CELL_SIZE)
+			if pipe.has_method("get_merge_pipe_merges"):
+				if pipe.get_merge_pipe_merges(previewPipeRotation, previewPipeFlip) == pipeFacing:
+					transformPipe = true
+					reversePath = true
+		
+		if draggedPathPipes.has(pipe.position - FactoryGlobal.HALF_CELL_SIZE):
+			overlappingPipes.append(pipe.position - FactoryGlobal.HALF_CELL_SIZE)
 
 func handle_pipe_chain() -> void:
 	var currentBuildings : Array = %Buildings.get_children()
@@ -930,6 +1033,8 @@ func handle_first_pipe_special_cases() -> void:
 		rotate_dragged_straight_pipes()
 
 func create_preview_path() -> void:
+	var currentStart = get_end_chain_start()
+	
 	if previewStart == Vector2.INF:
 		previewStart = cursor_snap()
 	
@@ -940,63 +1045,68 @@ func create_preview_path() -> void:
 	elif currentPreview != Vector2.INF and previewDirection != Vector2.INF and cursor_snap().distance_to(currentPreview) >= FactoryGlobal.CELL_SIZE.x:
 		currentPreview = cursor_snap()
 	
-	elif cursor_snap() == previewStart and previewStart != Vector2.INF and previewDirection != Vector2.INF:
+	elif cursor_snap() == currentStart and currentStart != Vector2.INF and previewDirection != Vector2.INF:
 		previewDirection = Vector2.INF
 		currentPreview = Vector2.INF
 
 func create_preview_path_start() -> Rect2:
+	var endChainStart = get_end_chain_start()
+	
 	if previewDirection == Vector2.INF:
-		return Rect2(previewStart, FactoryGlobal.CELL_SIZE)
+		return Rect2(endChainStart, FactoryGlobal.CELL_SIZE)
 	else:
 		if abs(previewDirection.x) > abs(previewDirection.y):
-			return Rect2(previewStart.x, previewStart.y, currentPreview.x - previewStart.x, FactoryGlobal.CELL_SIZE.y)
+			return Rect2(endChainStart.x, endChainStart.y, currentPreview.x - endChainStart.x, FactoryGlobal.CELL_SIZE.y)
 		else:
-			return Rect2(previewStart.x, previewStart.y, FactoryGlobal.CELL_SIZE.x, currentPreview.y - previewStart.y)
+			return Rect2(endChainStart.x, endChainStart.y, FactoryGlobal.CELL_SIZE.x, currentPreview.y - endChainStart.y)
 
 func create_preview_path_end() -> Rect2:
+	var endChainStart = get_end_chain_start()
+	
 	if previewDirection == Vector2.INF:
-		return Rect2(previewStart, FactoryGlobal.CELL_SIZE)
+		return Rect2(endChainStart, FactoryGlobal.CELL_SIZE)
 	else:
 		if abs(previewDirection.x) > abs(previewDirection.y):
-			return Rect2(cursor_snap().x, cursor_snap().y, FactoryGlobal.CELL_SIZE.x, previewStart.y - cursor_snap().y)
+			return Rect2(cursor_snap().x, cursor_snap().y, FactoryGlobal.CELL_SIZE.x, endChainStart.y - cursor_snap().y)
 		else:
-			return Rect2(currentPreview.x, currentPreview.y, previewStart.x - cursor_snap().x, FactoryGlobal.CELL_SIZE.y)
+			return Rect2(currentPreview.x, currentPreview.y, endChainStart.x - cursor_snap().x, FactoryGlobal.CELL_SIZE.y)
 	
 func create_dragged_pipes_start() -> Array[Vector2]:
 	var previewPipePath : Array[Vector2] = []
 	var previewCount : float
 	var previewPlace : float
+	var endChainStart = get_end_chain_start()
 	
-	previewPipePath.append(previewStart)
+	previewPipePath.append(endChainStart)
 	
 	if abs(previewDirection.x) > abs(previewDirection.y):
-		if previewEnd.x > previewStart.x:
+		if previewEnd.x > endChainStart.x:
 			previewPlace = FactoryGlobal.CELL_SIZE.x
 		else:
 			previewPlace = -FactoryGlobal.CELL_SIZE.x
 		
-		previewCount = abs(previewStart.x - previewEnd.x)
+		previewCount = abs(endChainStart.x - previewEnd.x)
 		
 		while previewCount > 0:
-			previewPipePath.append(Vector2(previewStart.x + previewPlace, previewStart.y))
+			previewPipePath.append(Vector2(endChainStart.x + previewPlace, endChainStart.y))
 			previewCount -= FactoryGlobal.CELL_SIZE.x
-			if previewEnd.x > previewStart.x:
+			if previewEnd.x > endChainStart.x:
 				previewPlace += FactoryGlobal.CELL_SIZE.x
 			else:
 				previewPlace -= FactoryGlobal.CELL_SIZE.x
 	
 	else:
-		if previewEnd.y > previewStart.y:
+		if previewEnd.y > endChainStart.y:
 			previewPlace = FactoryGlobal.CELL_SIZE.x
 		else:
 			previewPlace = -FactoryGlobal.CELL_SIZE.x
 		
-		previewCount = abs(previewStart.y - previewEnd.y)
+		previewCount = abs(endChainStart.y - previewEnd.y)
 		
 		while previewCount > 0:
-			previewPipePath.append(Vector2(previewStart.x, previewStart.y + previewPlace))
+			previewPipePath.append(Vector2(endChainStart.x, endChainStart.y + previewPlace))
 			previewCount -= FactoryGlobal.CELL_SIZE.y
-			if previewEnd.y > previewStart.y:
+			if previewEnd.y > endChainStart.y:
 				previewPlace += FactoryGlobal.CELL_SIZE.y
 			else:
 				previewPlace -= FactoryGlobal.CELL_SIZE.y
@@ -1007,35 +1117,36 @@ func create_dragged_pipes_end() -> Array[Vector2]:
 	var previewPipePath : Array[Vector2] = []
 	var previewCount : float
 	var previewPlace : float
+	var endChainStart = get_end_chain_start()
 	
 	if abs(previewDirection.x) > abs(previewDirection.y):
-		previewCount = abs(previewEnd.y - previewStart.y)
+		previewCount = abs(previewEnd.y - endChainStart.y)
 		
-		if previewEnd.y > previewStart.y:
+		if previewEnd.y > endChainStart.y:
 			previewPlace = FactoryGlobal.CELL_SIZE.y
 		else:
 			previewPlace = -FactoryGlobal.CELL_SIZE.y
 		
 		while previewCount > 0:
-			previewPipePath.append(Vector2(currentPreview.x, previewStart.y + previewPlace))
+			previewPipePath.append(Vector2(currentPreview.x, endChainStart.y + previewPlace))
 			previewCount -= FactoryGlobal.CELL_SIZE.y
-			if previewEnd.y > previewStart.y:
+			if previewEnd.y > endChainStart.y:
 				previewPlace += FactoryGlobal.CELL_SIZE.y
 			else:
 				previewPlace -= FactoryGlobal.CELL_SIZE.y
 				
 	else:
-		previewCount = abs(previewEnd.x - previewStart.x)
+		previewCount = abs(previewEnd.x - endChainStart.x)
 		
-		if previewEnd.x > previewStart.x:
+		if previewEnd.x > endChainStart.x:
 			previewPlace = FactoryGlobal.CELL_SIZE.x
 		else:
 			previewPlace = -FactoryGlobal.CELL_SIZE.x
 		
 		while previewCount > 0:
-			previewPipePath.append(Vector2(previewStart.x + previewPlace, currentPreview.y))
+			previewPipePath.append(Vector2(endChainStart.x + previewPlace, currentPreview.y))
 			previewCount -= FactoryGlobal.CELL_SIZE.x
-			if previewEnd.x > previewStart.x:
+			if previewEnd.x > endChainStart.x:
 				previewPlace += FactoryGlobal.CELL_SIZE.x
 			else:
 				previewPlace -= FactoryGlobal.CELL_SIZE.x
@@ -1182,6 +1293,7 @@ func spawn_building(location : String) -> void:
 				var building = selectedBuilding.instantiate()
 					
 				# Populates the pipe dictionary
+				# Scene, UID of pipe scene
 				# Name, name of the building
 				# X, x location in pixels
 				# Y, y location in pixels
@@ -1190,8 +1302,9 @@ func spawn_building(location : String) -> void:
 				# Recieves, which tile the pipe gets its resources from
 				# Merge Recieves, for mergers, since they get resources from two locations
 				# Gives, which tile the pipe sends its resource to
-				# Splot Gives, for splitters since they send resources to two locations
+				# Split Gives, for splitters since they send resources to two locations
 				# Elements, the list of resources in the pipe, only extractors have this populated at the beginning
+				# Calculation, placeholder for calculating flow before finalizing the amount and putting into Elements
 				pipeInfo[location] = {
 					"Scene" : buildingScene,
 					"Name" : nameBuilding, 
@@ -1204,6 +1317,7 @@ func spawn_building(location : String) -> void:
 					"Gives" : gives,
 					"Split Gives" : splitGives,
 					"Elements" : sourceDictionary,
+					"Calculation" : sourceDictionary,
 				}
 				
 				%Buildings.add_child(building)
@@ -1417,10 +1531,12 @@ func recalculate_factory(pipeDictionary : Dictionary, roomName : String):
 	print("##################")
 	print("Recalculating Factory")
 	print("##################")
+	foundPipeLoop = false
 	for pipe in pipeDictionary:
 		if is_starting_point(pipeDictionary, pipe, roomName) == false:
-			for element in pipeDictionary[pipe]["Elements"]:
+			for element in FactoryGlobal.elementArray:
 				pipeDictionary[pipe]["Elements"][element] = 0
+				pipeDictionary[pipe]["Calculation"][element] = 0
 	
 	# REFACTOR NECESSARY - Won't work for pipe loop between rooms
 	# Will break if the pipes loop back to the original room
@@ -1449,10 +1565,10 @@ func recalculate_factory(pipeDictionary : Dictionary, roomName : String):
 										if FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Direction"] == "OUTSIDE" and exit.get_direction() == "INSIDE":
 											if is_splitter_balanced(FactoryGlobal.activePipeLayout[connectedRoom], FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Start"], connectedRoom):
 												for element in FactoryGlobal.elementArray:
-													pipeDictionary[item]["Elements"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element] / 2
+													pipeDictionary[item]["Calculation"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element] / 2
 											else:
 												for element in FactoryGlobal.elementArray:
-													pipeDictionary[item]["Elements"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element]
+													pipeDictionary[item]["Calculation"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element]
 						
 					else:
 						for exit in FactoryGlobal.activeFlowBetweenRooms[roomName]["Exit Info"]:
@@ -1463,14 +1579,20 @@ func recalculate_factory(pipeDictionary : Dictionary, roomName : String):
 										if FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Direction"] == "OUTSIDE" and FactoryGlobal.activeFlowBetweenRooms[roomName][connectedRoom]["Direction"] == "INSIDE":
 											if is_splitter_balanced(FactoryGlobal.activePipeLayout[connectedRoom], FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Start"], connectedRoom):
 												for element in FactoryGlobal.elementArray:
-													pipeDictionary[item]["Elements"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element]
+													pipeDictionary[item]["Calculation"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element]
 											else:
 												for element in FactoryGlobal.elementArray:
-													pipeDictionary[item]["Elements"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element]
+													pipeDictionary[item]["Calculation"][element] = FactoryGlobal.activeFlowBetweenRooms[connectedRoom][roomName]["Amount"][element]
 								
 				# If a path is found, calculate how many resources are going through the pipe path
 				print("Calculating Flow")
-				calculate_flow(pipeDictionary, item, item, roomName, [])
+				var startAmount : Dictionary[String, float]
+				startAmount.assign(pipeDictionary[item]["Calculation"].duplicate(true))
+				calculate_flow(pipeDictionary, item, startAmount, item, roomName, {})
+				for pipe in pipeDictionary:
+					if pipeDictionary[pipe]["Elements"] != pipeDictionary[pipe]["Calculation"]:
+						for element in FactoryGlobal.elementArray:
+							pipeDictionary[pipe]["Elements"][element] += pipeDictionary[pipe]["Calculation"][element]
 	
 	print("Phylactery Locations")
 	print(phylacteryLocations)
@@ -1545,7 +1667,7 @@ func recalculate_factory(pipeDictionary : Dictionary, roomName : String):
 		#			 -> TestingRoom3 -> TestingRoom
 		#							 -> TestingRoom3
 
-func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previousPipe : String, roomName : String, foundPipes : Array[String]) -> void:
+func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, startingAmount : Dictionary[String, float], previousPipe : String, roomName : String, foundPipes : Dictionary[String, Array]) -> void:
 	var currentPipe : String = startingPoint
 	var loopCounter = 0
 	
@@ -1561,38 +1683,72 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 		print("Loop: " + str(loopCounter))
 		print(pipeDictionary[currentPipe]["Name"] + ": " + currentPipe)
 		var gives = pipeDictionary[currentPipe]["Gives"]
-		foundPipes.append(currentPipe)
+		
+		if foundPipes.has(roomName) == false:
+			foundPipes[roomName] = []
+		
+		if foundPipes[roomName].has(currentPipe):
+			print("")
+			print("#######################")
+			print("WARNING WARNING")
+			print("RECURSIVE PIPE DETECTED")
+			print("ABORT ABORT ABORT")
+			print(startingAmount)
+			print(pipeDictionary[currentPipe]["Calculation"])
+			print("#######################")
+			print("")
+			break
+			var sampleElement = ""
+			for element in FactoryGlobal.elementArray:
+				if pipeDictionary[currentPipe]["Calculation"][element] != 0:
+					sampleElement = element
+					break
+			
+			if sampleElement != "":
+				var currentAmount = pipeDictionary[currentPipe]["Calculation"][sampleElement]
+				var checkStartingAmount = startingAmount[sampleElement]
+				if currentAmount / checkStartingAmount <= flowMarginOfError:
+					print("Ending pipe loop")
+					foundPipeLoop = true
+			else:
+				break
+		else:
+			foundPipes[roomName].append(currentPipe)
 
 		if pipeDictionary[currentPipe]["Name"] == "Split Pipe":
 			var splitGives = pipeDictionary[currentPipe]["Split Gives"]
 			if is_splitter_balanced(pipeDictionary, currentPipe, roomName) == true:
 				if pipeDictionary.has(gives):
 					for element in FactoryGlobal.elementArray:
-						pipeDictionary[gives]["Elements"][element] += pipeDictionary[currentPipe]["Elements"][element] / 2
+						pipeDictionary[gives]["Calculation"][element] += pipeDictionary[currentPipe]["Calculation"][element] / 2
 				if pipeDictionary.has(splitGives):
 					for element in FactoryGlobal.elementArray:
-						pipeDictionary[splitGives]["Elements"][element] += pipeDictionary[currentPipe]["Elements"][element] / 2
+						pipeDictionary[splitGives]["Calculation"][element] += pipeDictionary[currentPipe]["Calculation"][element] / 2
 				
-				calculate_flow(pipeDictionary, splitGives, currentPipe, roomName, foundPipes)
+				calculate_flow(pipeDictionary, splitGives, startingAmount, currentPipe, roomName, foundPipes)
+				for element in FactoryGlobal.elementArray:
+						pipeDictionary[currentPipe]["Calculation"][element] = 0
 				
 			else:
 				if pipeDictionary.has(gives):
 					if is_temp_endpoint(pipeDictionary, gives) == true or pipeDictionary[gives]["Recieves"] == currentPipe or pipeDictionary[gives]["Merge Recieves"] == currentPipe:
 						for element in FactoryGlobal.elementArray:
-							pipeDictionary[gives]["Elements"][element] += pipeDictionary[currentPipe]["Elements"][element]
+							pipeDictionary[gives]["Calculation"][element] += pipeDictionary[currentPipe]["Calculation"][element]
 				
 				if pipeDictionary.has(splitGives):
 					if pipeDictionary[splitGives]["Recieves"] == currentPipe or pipeDictionary[splitGives]["Merge Recieves"] == currentPipe:
 						for element in FactoryGlobal.elementArray:
-							pipeDictionary[splitGives]["Elements"][element] += pipeDictionary[currentPipe]["Elements"][element]
+							pipeDictionary[splitGives]["Calculation"][element] += pipeDictionary[currentPipe]["Calculation"][element]
 
-					calculate_flow(pipeDictionary, splitGives, currentPipe, roomName, foundPipes)
+					calculate_flow(pipeDictionary, splitGives, startingAmount, currentPipe, roomName, foundPipes)
+					for element in FactoryGlobal.elementArray:
+						pipeDictionary[currentPipe]["Calculation"][element] = 0
 
 		else:
 			if pipeDictionary.has(gives):
 				if is_temp_endpoint(pipeDictionary, gives) == true or pipeDictionary[gives]["Recieves"] == currentPipe or pipeDictionary[gives]["Merge Recieves"] == currentPipe:
 					for element in FactoryGlobal.elementArray:
-						pipeDictionary[gives]["Elements"][element] += pipeDictionary[currentPipe]["Elements"][element]
+						pipeDictionary[gives]["Calculation"][element] += pipeDictionary[currentPipe]["Calculation"][element]
 		
 		var isOnExit : bool = false
 		var currentExit : String = ""
@@ -1617,7 +1773,12 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 								isOnExit = true
 								break
 		
-		if isOnExit == true:
+		print("Checking for end pipe loop")
+		print(currentPipe)
+		print(foundPipeLoop)
+		if is_endpoint(pipeDictionary, currentPipe, roomName, false) == true and foundPipeLoop == true:
+			break
+		elif isOnExit == true:
 			if FactoryGlobal.activeFlowBetweenRooms.has(roomName) and FactoryGlobal.activeFlowBetweenRooms.has(currentExit):
 				if FactoryGlobal.activeFlowBetweenRooms[roomName].has(currentExit) and FactoryGlobal.activeFlowBetweenRooms[currentExit].has(roomName):
 					var newStartingPipe : String = FactoryGlobal.activeFlowBetweenRooms[currentExit][roomName]["Start"]
@@ -1625,16 +1786,16 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 						if pipeDictionary[currentPipe]["Name"] == "Split Pipe":
 							if is_splitter_balanced(pipeDictionary, currentPipe, roomName):
 								for element in FactoryGlobal.elementArray:
-									FactoryGlobal.activeFlowBetweenRooms[roomName][currentExit]["Amount"][element] = pipeDictionary[currentPipe]["Elements"][element] / 2
-									FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Elements"][element] = pipeDictionary[currentPipe]["Elements"][element] / 2
+									FactoryGlobal.activeFlowBetweenRooms[roomName][currentExit]["Amount"][element] = pipeDictionary[currentPipe]["Calculation"][element] / 2
+									FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Calculation"][element] = pipeDictionary[currentPipe]["Calculation"][element] / 2
 							else:
 								for element in FactoryGlobal.elementArray:
-									FactoryGlobal.activeFlowBetweenRooms[roomName][currentExit]["Amount"][element] = pipeDictionary[currentPipe]["Elements"][element]
-									FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Elements"][element] = pipeDictionary[currentPipe]["Elements"][element]
+									FactoryGlobal.activeFlowBetweenRooms[roomName][currentExit]["Amount"][element] = pipeDictionary[currentPipe]["Calculation"][element]
+									FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Calculation"][element] = pipeDictionary[currentPipe]["Calculation"][element]
 						else:
 							for element in FactoryGlobal.elementArray:
-								FactoryGlobal.activeFlowBetweenRooms[roomName][currentExit]["Amount"][element] = pipeDictionary[currentPipe]["Elements"][element]
-								FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Elements"][element] = pipeDictionary[currentPipe]["Elements"][element]
+								FactoryGlobal.activeFlowBetweenRooms[roomName][currentExit]["Amount"][element] = pipeDictionary[currentPipe]["Calculation"][element]
+								FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Calculation"][element] = pipeDictionary[currentPipe]["Calculation"][element]
 								
 						previousPipe = currentPipe
 						recalculate_factory(FactoryGlobal.activePipeLayout[currentExit], currentExit)
@@ -1649,6 +1810,10 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 				break
 					
 		elif pipeDictionary.has(gives):
+			if is_starting_point(pipeDictionary, currentPipe, roomName) == false:
+				for element in FactoryGlobal.elementArray:
+					pipeDictionary[currentPipe]["Calculation"][element] = 0
+			
 			if pipeDictionary[gives]["Name"] == "Phylactery":
 				print("Found Phylactery")
 				phylacteryLocations[roomName] = gives
@@ -1660,12 +1825,25 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 			else:
 				print("Pipe chain ended")
 				break
-			#if is_starting_point(currentPipe) == false:
-					#for element in FactoryGlobal.elementArray:
-						#pipeDictionary[currentPipe]["Elements"][element] = 0
+		elif pipeDictionary.has(pipeDictionary[currentPipe]["Split Gives"]):
+			if is_starting_point(pipeDictionary, currentPipe, roomName) == false:
+				for element in FactoryGlobal.elementArray:
+					pipeDictionary[currentPipe]["Calculation"][element] = 0
+			
+			if pipeDictionary[pipeDictionary[currentPipe]["Split Gives"]]["Name"] == "Phylactery":
+				print("Found Phylactery")
+				phylacteryLocations[roomName] = pipeDictionary[currentPipe]["Split Gives"]
+			
+			if pipeDictionary[pipeDictionary[currentPipe]["Split Gives"]]["Recieves"] == currentPipe or pipeDictionary[pipeDictionary[currentPipe]["Split Gives"]]["Merge Recieves"] == currentPipe:
+				print("Continuing pipe chain (Split Gives)")
+				previousPipe = currentPipe
+				currentPipe = pipeDictionary[currentPipe]["Split Gives"]
+			else:
+				print("Pipe chain ended")
+				break
 		else: 
 			print("Didn't find exit")
-			print(pipeDictionary[currentPipe]["Elements"])
+			print(pipeDictionary[currentPipe]["Calculation"])
 			break
 
 #func clear_previous_pipes(pipeDictionary : Dictionary, endPoint : String, previousPipe : String) -> void:
