@@ -121,7 +121,7 @@ func _ready() -> void:
 				if exitCoords == str_to_var(pipe):
 					handle_room_transition_pipes(pipeInfo[pipe]["Name"], pipeInfo[pipe]["Gives"], pipeInfo[pipe]["Recieves"], exit)
 			
-		recalculate_factory(pipeInfo, get_parent().name, {})
+		recalculate_factory(pipeInfo, get_parent().name, {}, true)
 		#endregion
 
 func _process(_delta: float) -> void:
@@ -238,10 +238,13 @@ func _process(_delta: float) -> void:
 		var holder = get_node_or_null("Holder")
 		if holder:
 			for pipe in holder.get_children():
+				var pipePositionOnGrid : Vector2 = get_grid_coordinates(pipe.global_position)
 				var foundOverlap = false
 				for building in %Buildings.get_children():
-					if pipe.global_position == building.global_position:
+					var buildingPositionOnGrid : Vector2 = get_grid_coordinates(building.global_position)
+					if pipePositionOnGrid == buildingPositionOnGrid:
 						foundOverlap = true
+						break
 				
 				if foundOverlap == true:
 					overlappingPipes.append(pipe.global_position - FactoryGlobal.HALF_CELL_SIZE - menuOffset)
@@ -296,7 +299,7 @@ func _input(event: InputEvent) -> void:
 									spawn_building(var_to_str(pipe.global_position - menuOffset))
 									pipe.global_position = pipe.global_position + FactoryGlobal.HALF_CELL_SIZE
 							
-							recalculate_factory(pipeInfo, get_parent().name, {})
+							recalculate_factory(pipeInfo, get_parent().name, {}, true)
 							selectedBuilding = preDragBuilding
 							selectedBuildingIndex = preDragBuildingIndex
 						else:
@@ -323,13 +326,13 @@ func _input(event: InputEvent) -> void:
 								finalDragPoint = previewStart
 							
 							handle_pipe_chain(previewDirection, finalDragPoint, previewEnd)
-							recalculate_factory(pipeInfo, get_parent().name, {})
+							recalculate_factory(pipeInfo, get_parent().name, {}, true)
 						else:
 							if pipeInfo.has(var_to_str(cursor_snap())) == true:
 								display_pipe_info(var_to_str(cursor_snap()))
 							else:
 								spawn_building(var_to_str(cursor_snap()))
-								recalculate_factory(pipeInfo, get_parent().name, {})
+								recalculate_factory(pipeInfo, get_parent().name, {}, true)
 						
 						selectedBuildingIndex = preDragBuildingIndex
 						selectedBuilding = preDragBuilding
@@ -974,8 +977,9 @@ func handle_pipe_chain(currentChainDirection : Vector2, currentStart : Vector2, 
 						selectedBuilding = FactoryGlobal.turnPipe
 						selectedBuildingIndex = TurnPipe.BUILDING_INDEX
 						var anchorDirection : Vector2
-						var anchorCurveStart : Vector2 = previewPipesEnd[0]
+						var anchorCurveStart : Vector2 = previewPipesStart[-1]
 						var anchorCurveEnd : Vector2 = pipe
+						
 						if anchorCurveStart.y > anchorCurveEnd.y:
 							anchorDirection = Vector2.UP
 						else:
@@ -992,6 +996,7 @@ func handle_pipe_chain(currentChainDirection : Vector2, currentStart : Vector2, 
 						var anchorDirection : Vector2
 						var anchorCurveStart : Vector2 = previewPipesEnd[0]
 						var anchorCurveEnd : Vector2 = pipe
+						
 						if anchorCurveStart.x > anchorCurveEnd.x:
 							anchorDirection = Vector2.LEFT
 						else:
@@ -1119,7 +1124,7 @@ func create_copy_preview() -> void:
 			if body.collider.is_in_group("Buildings") and body.collider.get_parent().get_parent() == gridParent:
 				var previewPipe = body.collider.duplicate()
 				positonArray.append(previewPipe.global_position)
-
+				
 				holder.add_child(previewPipe)
 	
 	if positonArray != []:
@@ -1495,16 +1500,19 @@ func delete_building(location : String) -> void:
 				if FactoryGlobal.activeFlowBetweenRooms.has(get_parent().name) == true:
 					if FactoryGlobal.activeFlowBetweenRooms[get_parent().name].has("Exit Info"):
 						FactoryGlobal.activeFlowBetweenRooms[get_parent().name]["Exit Info"].erase(var_to_str(exitCoords))
-					
+				
+				if FactoryGlobal.activeFlowBetweenRooms.has(get_parent().name) == true:
 					if FactoryGlobal.activeFlowBetweenRooms[get_parent().name].has(exit.connectingRoom) == true:
 						for element in FactoryGlobal.elementArray:
 							FactoryGlobal.activeFlowBetweenRooms[get_parent().name][exit.connectingRoom]["Amount"][element] = 0
 						
 						if FactoryGlobal.activeFlowBetweenRooms.has(exit.connectingRoom):
-							for element in FactoryGlobal.elementArray:
-								FactoryGlobal.activePipeLayout[exit.connectingRoom][FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][get_parent().name]["Start"]]["Elements"][element] = 0
+							if FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom].has(get_parent().name):
+								var startingPipe : String = FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][get_parent().name]["Start"]
+								for element in FactoryGlobal.elementArray:
+									FactoryGlobal.activePipeLayout[exit.connectingRoom][startingPipe]["Elements"][element] = 0
 						
-							recalculate_factory(FactoryGlobal.activePipeLayout[exit.connectingRoom], exit.connectingRoom, {})
+							recalculate_factory(FactoryGlobal.activePipeLayout[exit.connectingRoom], exit.connectingRoom, {}, true)
 				break
 		
 		for body in %Buildings.get_children():
@@ -1513,7 +1521,8 @@ func delete_building(location : String) -> void:
 				body.queue_free()
 				break
 		
-		recalculate_factory(pipeInfo, get_parent().name, {})
+		recalculate_factory(pipeInfo, get_parent().name, {}, true)
+		recalulate_downstream_flow()
 
 func select_building(index : int) -> void:
 	pipeDragging = false
@@ -1671,7 +1680,25 @@ func handle_room_transition_pipes(pipeName : String, gives : String, recieves : 
 #endregion
 
 #region Element Calculations
-func recalculate_factory(pipeDictionary : Dictionary, roomName : String, foundPipes : Dictionary[String, Array]):
+# THE LOOPS JUST WON'T STOP
+# How do I stop them?
+# Step by step on how pipe math is done
+# First, we reset all of the current resource amounts
+# Then, we reset all of the phylactery locations (I clear the list)
+# Find starting points, and calculate from there (starting points that connect rooms need a bit of logic to make sure they have correct resource amounts)
+# Follow basic pipe logic (push resource downstream, split on splitters) until end is reached
+# If there are loops keep looping through until only a tiny amount is unaccounted for
+# If the pipe connects to another room then do the same thing with the pipe dictionary of that room intead
+# This is where pipe loop between rooms logic probably has to go, but I don't have it right now
+# Update dictionaries that keep track of all the stuff going on between rooms
+# Alright, so what do I need to do?
+# The only that's really going wrong is that I need to recalulate things downstream from the room that's being edited
+# That needs to happen because if you delete some pipes and cut off the flow from somewhere (or otherwise change it) then everything downstream needs to reflect that
+# I don't think I can just do that recalculation when pipes are deleted because what if the change is a splitter?
+# When do I actually need to recalculate for things like that?
+# This is a very specific type of recalulation
+# I sees if there's a pipe going outside
+func recalculate_factory(pipeDictionary : Dictionary, roomName : String, foundPipes : Dictionary[String, Array], isStartingRoom : bool):
 	# Every non-extractor pipe needs to have its resource amounts reset
 	print("")
 	print("")
@@ -1690,13 +1717,13 @@ func recalculate_factory(pipeDictionary : Dictionary, roomName : String, foundPi
 				pipeDictionary[pipe]["Elements"][element] = 0
 				pipeDictionary[pipe]["Calculation"][element] = 0
 	
-	# REFACTOR NECESSARY - Won't work for pipe loop between rooms
-	# Will break if the pipes loop back to the original room
-	if roomName == get_parent().name:
+	if isStartingRoom:
 		phylacteryLocations = {}
 	
 	for item in pipeDictionary:
 		if is_starting_point(pipeDictionary, item, roomName) == true:
+			if isStartingRoom == true:
+				foundPipes.clear()
 			print("Start")
 			print(roomName)
 			print(item)
@@ -1810,30 +1837,7 @@ func recalculate_factory(pipeDictionary : Dictionary, roomName : String, foundPi
 
 			FactoryGlobal.activeFlowBetweenRooms[get_parent().name] = roomDictionary.duplicate(true)
 			FactoryGlobal.activeFlowBetweenRooms[get_parent().name]["Exit Info"] = exitDictionary.duplicate(true)
-			
-			var checkedExits : Array[PipeExit] = []
-			for exit in usedExitsArray:
-				var exitCoords := get_grid_coordinates(exit.position)
-				exitCoords = get_grid_position(exitCoords)
-				
-				for pipe in exitPipesArray:
-					if pipe == var_to_str(exitCoords) and exit.get_direction() == "OUTSIDE" and checkedExits.has(exit) == false:
-						if FactoryGlobal.activeFlowBetweenRooms.has(roomName) == true and FactoryGlobal.activeFlowBetweenRooms.has(exit.connectingRoom) == true:
-							if FactoryGlobal.activeFlowBetweenRooms[roomName].has(exit.connectingRoom) == true:
-								var otherPipe = FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][roomName]["Start"]
-								if FactoryGlobal.activePipeLayout[exit.connectingRoom].has(otherPipe) == true and FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][roomName]["Direction"] == "INSIDE":
-									if FactoryGlobal.activePipeLayout[roomName][pipe]["Elements"] != FactoryGlobal.activePipeLayout[exit.connectingRoom][otherPipe]["Elements"]:
-										for element in FactoryGlobal.elementArray:
-											FactoryGlobal.activePipeLayout[exit.connectingRoom][FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][roomName]["Start"]]["Elements"][element] = FactoryGlobal.activeFlowBetweenRooms[roomName][exit.connectingRoom]["Amount"][element]
-										
-										print("#############################")
-										print("WARNING WARNING")
-										print("POTENTIAL RECURSIVE SHENANIGANS")
-										print("Doing another factory recalculation")
-										print("#############################")
-										break
-										checkedExits.append(exit)
-										recalculate_factory(FactoryGlobal.activePipeLayout[exit.connectingRoom], exit.connectingRoom, {})
+
 		# Dictionary
 		# Keys -> Rooms
 		# Values -> Connections -> Dictionary
@@ -1848,6 +1852,7 @@ func recalculate_factory(pipeDictionary : Dictionary, roomName : String, foundPi
 		#			 				 -> TestingRoom3
 		#			 -> TestingRoom3 -> TestingRoom
 		#							 -> TestingRoom3
+
 
 func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previousPipe : String, roomName : String, foundPipes : Dictionary[String, Array]) -> void:
 	var currentPipe : String = startingPoint
@@ -1865,7 +1870,6 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 		print("Loop: " + str(loopCounter))
 		print(pipeDictionary[currentPipe]["Name"] + ": " + currentPipe)
 		var gives = pipeDictionary[currentPipe]["Gives"]
-		
 		if foundPipes.has(roomName) == false:
 			foundPipes[roomName] = []
 		
@@ -1875,6 +1879,8 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 			print("WARNING WARNING")
 			print("RECURSIVE PIPE DETECTED")
 			print("ABORT ABORT ABORT")
+			print(roomName)
+			print(currentPipe)
 			print(pipeDictionary[currentPipe]["Calculation"])
 			print("#######################")
 			print("")
@@ -1897,13 +1903,13 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 				calculate_flow(pipeDictionary, splitGives, currentPipe, roomName, foundPipes)
 				
 			else:
-				if pipeDictionary.has(gives):
+				if pipeDictionary.has(gives) and does_path_exist(pipeDictionary, gives, roomName, false, []):
 					if is_endpoint(pipeDictionary, gives, roomName, false) == true or pipeDictionary[gives]["Recieves"] == currentPipe or pipeDictionary[gives]["Merge Recieves"] == currentPipe:
 						for element in FactoryGlobal.elementArray:
 							pipeDictionary[gives]["Calculation"][element] += pipeDictionary[currentPipe]["Calculation"][element]
 				
 				var calculateSplitGives : bool = false
-				if pipeDictionary.has(splitGives):
+				if pipeDictionary.has(splitGives) and does_path_exist(pipeDictionary, splitGives, roomName, false, []):
 					calculateSplitGives = true
 					if pipeDictionary[splitGives]["Recieves"] == currentPipe or pipeDictionary[splitGives]["Merge Recieves"] == currentPipe:
 						for element in FactoryGlobal.elementArray:
@@ -1923,6 +1929,7 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 		
 		var isOnExit : bool = false
 		var currentExit : String = ""
+		var startingPipe : String = ""
 		
 		if roomName == get_parent().name:
 			for exit in usedExitsArray:
@@ -1932,6 +1939,9 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 				if currentPipe == var_to_str(exitCoords) and exit.get_direction() == "OUTSIDE":
 					currentExit = exit.connectingRoom
 					isOnExit = true
+					if FactoryGlobal.activeFlowBetweenRooms.has(currentExit):
+						if FactoryGlobal.activeFlowBetweenRooms[currentExit].has(roomName):
+							startingPipe = FactoryGlobal.activeFlowBetweenRooms[currentExit][roomName]["Start"]
 					break
 		
 		else:
@@ -1941,20 +1951,49 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 						currentExit = FactoryGlobal.activeFlowBetweenRooms[roomName]["Exit Info"][exit]
 						if FactoryGlobal.activeFlowBetweenRooms[roomName].has(currentExit):
 							if FactoryGlobal.activeFlowBetweenRooms[roomName][currentExit]["Direction"] == "OUTSIDE":
-								isOnExit = true
-								break
+								if FactoryGlobal.activeFlowBetweenRooms.has(currentExit):
+									if FactoryGlobal.activeFlowBetweenRooms[currentExit].has(roomName):
+										isOnExit = true
+										startingPipe = FactoryGlobal.activeFlowBetweenRooms[currentExit][roomName]["Start"]
+										break
 		
-		if isOnExit == true:
-			print(foundPipes)
-			print(":)")
+		if isOnExit == true and startingPipe != "":
 			if foundPipes.has(currentExit):
-				print("#################")
-				print("WARNING WARNING")
-				print("CIRCULAR ROOM STRUCTURE")
-				print("!!!!!!!!!!!!!!!!!")
-				print("ABORT ABORT ABORT")
-				print("#################")
-				break
+				if foundPipes[currentExit].has(startingPipe):
+					print("#################")
+					print("WARNING WARNING")
+					print("CIRCULAR ROOM STRUCTURE")
+					print("!!!!!!!!!!!!!!!!!")
+					print("ABORT ABORT ABORT")
+					print("#################")
+					break
+			if roomName == get_parent().name:
+				var checkExit : PipeExit = null
+				for exit in usedExitsArray:
+					var exitCoords := get_grid_coordinates(exit.position)
+					exitCoords = get_grid_position(exitCoords)
+				
+					if currentPipe == var_to_str(exitCoords) and exit.get_direction() == "OUTSIDE":
+						checkExit = exit
+				
+				if checkExit != null and FactoryGlobal.activeFlowBetweenRooms.has(currentExit):
+					if FactoryGlobal.activeFlowBetweenRooms[currentExit].has(roomName):
+						if FactoryGlobal.activeFlowBetweenRooms[currentExit][roomName]["Direction"] == "INSIDE":
+							var newStartingPipe : String = FactoryGlobal.activeFlowBetweenRooms[currentExit][roomName]["Start"]
+							if pipeDictionary[currentPipe]["Name"] == "Split Pipe":
+								if is_splitter_balanced(pipeDictionary, currentPipe, roomName):
+									for element in FactoryGlobal.elementArray:
+										FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Calculation"][element] = pipeDictionary[currentPipe]["Calculation"][element] / 2
+								else:
+									for element in FactoryGlobal.elementArray:
+										FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Calculation"][element] = pipeDictionary[currentPipe]["Calculation"][element]
+							else:
+								for element in FactoryGlobal.elementArray:
+									FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Calculation"][element] = pipeDictionary[currentPipe]["Calculation"][element]
+									
+							previousPipe = currentPipe
+							recalculate_factory(FactoryGlobal.activePipeLayout[currentExit], currentExit, foundPipes, false)
+							
 			elif FactoryGlobal.activeFlowBetweenRooms.has(roomName) and FactoryGlobal.activeFlowBetweenRooms.has(currentExit):
 				if FactoryGlobal.activeFlowBetweenRooms[roomName].has(currentExit) and FactoryGlobal.activeFlowBetweenRooms[currentExit].has(roomName):
 					var newStartingPipe : String = FactoryGlobal.activeFlowBetweenRooms[currentExit][roomName]["Start"]
@@ -1974,12 +2013,13 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 								FactoryGlobal.activePipeLayout[currentExit][newStartingPipe]["Calculation"][element] = pipeDictionary[currentPipe]["Calculation"][element]
 								
 						previousPipe = currentPipe
-						recalculate_factory(FactoryGlobal.activePipeLayout[currentExit], currentExit, foundPipes)
+						recalculate_factory(FactoryGlobal.activePipeLayout[currentExit], currentExit, foundPipes, false)
 					else:
 						print("Does not have starting pipe")
 						break
 				else:
 					print("Does not have connection")
+					print(FactoryGlobal.activeFlowBetweenRooms)
 					break
 			else:
 				print("Does not have entry")
@@ -2021,6 +2061,30 @@ func calculate_flow(pipeDictionary : Dictionary, startingPoint : String, previou
 			print("Didn't find exit")
 			print(pipeDictionary[currentPipe]["Calculation"])
 			break
+
+func recalulate_downstream_flow() -> void:
+	var roomName = get_parent().name
+
+	for exit in usedExitsArray:
+		var exitCoords := get_grid_coordinates(exit.position)
+		exitCoords = get_grid_position(exitCoords)
+		
+		for pipe in exitPipesArray:
+			if pipe == var_to_str(exitCoords) and exit.get_direction() == "OUTSIDE":
+				if FactoryGlobal.activeFlowBetweenRooms.has(roomName) == true and FactoryGlobal.activeFlowBetweenRooms.has(exit.connectingRoom) == true:
+					if FactoryGlobal.activeFlowBetweenRooms[roomName].has(exit.connectingRoom) == true:
+						var otherPipe = FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][roomName]["Start"]
+						if FactoryGlobal.activePipeLayout[exit.connectingRoom].has(otherPipe) == true and FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][roomName]["Direction"] == "INSIDE":
+							if FactoryGlobal.activePipeLayout[roomName][pipe]["Elements"] != FactoryGlobal.activePipeLayout[exit.connectingRoom][otherPipe]["Elements"]:
+								for element in FactoryGlobal.elementArray:
+									FactoryGlobal.activePipeLayout[exit.connectingRoom][FactoryGlobal.activeFlowBetweenRooms[exit.connectingRoom][roomName]["Start"]]["Elements"][element] = FactoryGlobal.activeFlowBetweenRooms[roomName][exit.connectingRoom]["Amount"][element]
+								
+								print("#############################")
+								print("WARNING WARNING")
+								print("POTENTIAL RECURSIVE SHENANIGANS")
+								print("Doing another factory recalculation")
+								print("#############################")
+								recalculate_factory(FactoryGlobal.activePipeLayout[exit.connectingRoom], exit.connectingRoom, {}, true)
 
 func are_elements_empty(elementDictionary : Dictionary[String, float]) -> bool:
 	for element in FactoryGlobal.elementArray:
@@ -2173,7 +2237,7 @@ func does_path_exist(pipeDictionary : Dictionary, item : String, roomName : Stri
 						var exitCoords := get_grid_coordinates(exit.position)
 						exitCoords = get_grid_position(exitCoords)
 					
-						if exit.position == str_to_var(item):
+						if exitCoords == str_to_var(item):
 							connectedRoom = exit.connectingRoom
 							if FactoryGlobal.activeFlowBetweenRooms.has(connectedRoom) and exit.get_direction() == "OUTSIDE":
 								if FactoryGlobal.activeFlowBetweenRooms[connectedRoom].has(roomName):
@@ -2228,8 +2292,8 @@ func does_path_exist(pipeDictionary : Dictionary, item : String, roomName : Stri
 								for exit in usedExitsArray:
 									var exitCoords := get_grid_coordinates(exit.position)
 									exitCoords = get_grid_position(exitCoords)
-								
-									if exit.position == str_to_var(item):
+
+									if exitCoords == str_to_var(pipe):
 										connectedRoom = exit.connectingRoom
 										if FactoryGlobal.activeFlowBetweenRooms.has(connectedRoom) and exit.get_direction() == "OUTSIDE":
 											if FactoryGlobal.activeFlowBetweenRooms[connectedRoom].has(roomName):
