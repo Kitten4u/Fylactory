@@ -84,7 +84,7 @@ position = Vector2(0, 250)
 connectingRoom = "Testing Room"
 
 [node name="ExitToTestingRoom3" parent="Grid/Exits" unique_id=645939723 instance=ExtResource("4_cuyyl")]
-position = Vector2(900, 610)
+position = Vector2(900, 600)
 side = 3
 connectingRoom = "TestingRoom3"
 
